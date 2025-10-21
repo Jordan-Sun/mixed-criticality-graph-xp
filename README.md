@@ -11,8 +11,8 @@ Clone the repo and run the helper script:
 
 ```bash
 git clone git@github.com:simonpicard/mixed-criticality-graph-xp.git
-git submodule update --init
 cd mixed-criticality-graph-xp/
+git submodule update --init
 ./docker.sh make
 ```
 

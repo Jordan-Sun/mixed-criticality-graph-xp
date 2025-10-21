@@ -1,4 +1,4 @@
-FROM ubuntu:23.10
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=yes
@@ -52,9 +52,9 @@ RUN yes | unminimize
 
 # Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.11 \
-        python3.11-dev \
-        python3.11-venv \
+        python3 \
+        python3-dev \
+        python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 # Other tools
