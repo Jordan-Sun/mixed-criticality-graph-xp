@@ -11,7 +11,7 @@ then
   exit 1
 fi
 
-PYTHON=python3.11
+PYTHON=python3
 VENV=${venv_dir}
 PIP=${VENV}/bin/pip
 
