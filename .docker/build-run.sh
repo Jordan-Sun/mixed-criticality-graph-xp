@@ -42,8 +42,8 @@ else
   DOCKER_ROOTLESS=${DOCKER_ROOTLESS}
 fi
 
-uid=$(id -u)
-gid=$(id -g)
+uid=$(($(id -u)))
+gid=$(($(id -g)))
 
 if [ ! 0 = ${DOCKER_ROOTLESS} ]
 then
