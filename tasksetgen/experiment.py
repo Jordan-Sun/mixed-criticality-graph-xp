@@ -289,7 +289,7 @@ def read_args():
         "-min_t",
         "--minimum_period",
         help="minimum period",
-        required=True,
+        required=False,
         type=int,
     )
     parser.add_argument(

@@ -3,7 +3,7 @@ set -ex
 
 cd campaigns
 
-entrypoint.sh
+# entrypoint.sh
 ./configure.sh
 ./run-campaign.sh
-exitpoint.sh
+# exitpoint.sh
