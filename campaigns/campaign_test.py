@@ -74,8 +74,9 @@ def campaign_state_space(timeout_seconds: int):
         taskset2filename(f, benchmark)
         for f in [
             # "statespace-rtss-utilisation",  # we dropped this chart from the paper
-            "statespace-rtss-period-max",
-            "statespace-rtss-n-tasks",
+            # "statespace-rtss-period-max",
+            # "statespace-rtss-n-tasks",
+            "harmonic"
         ]
     ]
 
