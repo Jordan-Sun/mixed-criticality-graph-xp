@@ -70,10 +70,10 @@ docker build \
   --tag "${image_name}" \
   .
 
-if [ "x0x" = "x${DOCKER_ROOTLESS}x" ]
-then
-  run_image=${image_name}
-else
+# if [ "x0x" = "x${DOCKER_ROOTLESS}x" ]
+# then
+#   run_image=${image_name}
+# else
   docker build \
     --file "${root_dir}/.docker/rootless.dockerfile" \
     --build-arg=BASE_IMAGE="${image_name}" \
@@ -81,7 +81,7 @@ else
     .
 
   run_image=${image_rootless_name}
-fi
+# fi
 
 guest_ws_dir=/home/user/workspace
 

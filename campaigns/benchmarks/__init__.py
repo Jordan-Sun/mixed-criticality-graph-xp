@@ -68,6 +68,8 @@ class MCSBench(Benchmark):
             "safe_oracles",
             "unsafe_oracles",
             "periodic_tweak",
+            "log_level",
+            "graph_output",
         ]
 
     @staticmethod
@@ -124,6 +126,8 @@ class MCSBench(Benchmark):
         safe_oracles: List[str],
         unsafe_oracles: List[str],
         periodic_tweak: bool = False,
+        log_level: int | None = None,
+        graph_output: PathType | None = None,
         **kwargs,
     ) -> str:
         environment = self._preload_env(
@@ -135,6 +139,8 @@ class MCSBench(Benchmark):
             safe_oracles=safe_oracles,
             unsafe_oracles=unsafe_oracles,
             periodic_tweak=periodic_tweak,
+            log_level=log_level,
+            graph_output=graph_output,
             **kwargs,
         )
 
@@ -172,6 +178,10 @@ class MCSBench(Benchmark):
             cmd_options += ["--unsafe-oracles", ",".join(unsafe_oracles)]
         if periodic_tweak:
             cmd_options.append("--periodic-tweak")
+        if log_level is not None:
+            cmd_options += ["--log-level", str(log_level)]
+        if graph_output is not None:
+            cmd_options += ["--graph-output", str(graph_output)]
 
         mcs_build_dir = f"build-{self.platform.architecture}-docker"
         run_command = (

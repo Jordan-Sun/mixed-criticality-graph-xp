@@ -14,3 +14,5 @@ cmake-build-*/
 # outputs
 outputs/*.csv
 outputs/*.txt
+
+*/results/*

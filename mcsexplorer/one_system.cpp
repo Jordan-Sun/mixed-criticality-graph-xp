@@ -13,6 +13,7 @@
 
 struct {
     std::string inputfile_path;
+    std::string graph_output_path;
     size_t taskset_position;
     bool use_idlesim = false;
     std::string scheduler = "edfvd";
@@ -119,6 +120,11 @@ void parse_args(int argc, char** argv) {
         } else if ("--periodic-tweak" == argument) {
             i++;
             CONFIG.periodic_tweak = true;
+        }
+        else if ("--graph-output" == argument) {
+            i++;
+            CONFIG.graph_output_path = argv[i];
+            i++;
         } else {
             i++;
             std::cerr << "Unknown argument: " << argument << std::endl;
@@ -181,7 +187,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    Graph graph(start_state, scheduler, "", CONFIG.log_level, safe_oracles, unsafe_oracles, CONFIG.periodic_tweak);
+    Graph graph(start_state, scheduler, CONFIG.graph_output_path, CONFIG.log_level, safe_oracles, unsafe_oracles, CONFIG.periodic_tweak);
 
     int64_t* result;
     if (CONFIG.use_idlesim) {
