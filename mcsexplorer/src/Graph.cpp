@@ -34,25 +34,25 @@ std::vector<State*> Graph::request_transition(State* state) {
     std::vector<State*> new_states;
 
     std::vector<size_t> eligibles_candidates = state->get_eligibles();
-    // std::vector<std::vector<int>> all_eligibles = power_set(eligibles_candidates);
-    // if (periodic_tweak) {
-    //     std::vector<int> eligibles_candidates_int =
-    //         std::vector<int>(eligibles_candidates.begin(), eligibles_candidates.end());
-    //     all_eligibles = std::vector<std::vector<int>>{eligibles_candidates_int};
-    // }
+    std::vector<std::vector<int>> all_eligibles = power_set(eligibles_candidates);
+    if (periodic_tweak) {
+        std::vector<int> eligibles_candidates_int =
+            std::vector<int>(eligibles_candidates.begin(), eligibles_candidates.end());
+        all_eligibles = std::vector<std::vector<int>>{eligibles_candidates_int};
+    }
 
-    // for (std::vector<int> const& current_eligibles : all_eligibles) {
-    //     State* request_state = new State(*state);
-    //     request_state->request_transition(current_eligibles);
-    //     new_states.push_back(request_state);
-    // }
+    for (std::vector<int> const& current_eligibles : all_eligibles) {
+        State* request_state = new State(*state);
+        request_state->request_transition(current_eligibles);
+        new_states.push_back(request_state);
+    }
 
-    // Always request all available and see if we can still obtain the same result
-    std::vector<int> eligibles_candidates_int =
-        std::vector<int>(eligibles_candidates.begin(), eligibles_candidates.end());
-    State* request_state = new State(*state);
-    request_state->request_transition(eligibles_candidates_int);
-    new_states.push_back(request_state);
+    // // Always request all available and see if we can still obtain the same result
+    // std::vector<int> eligibles_candidates_int =
+    //     std::vector<int>(eligibles_candidates.begin(), eligibles_candidates.end());
+    // State* request_state = new State(*state);
+    // request_state->request_transition(eligibles_candidates_int);
+    // new_states.push_back(request_state);
 
     delete state;
 
