@@ -31,6 +31,12 @@ void statespace_antichain_experiment(State* initial_state, int test_case_id, std
     std::cout << search_result_csv_line.str();
     output_file << search_result_csv_line.str();
 
+    search_result = g.pfacbfs();
+    search_result_csv_line << test_case_id << ",PFACBFS,EDF-VD,None,None," << search_result[0] << "," << search_result[1]
+                           << "," << search_result[2] << "," << search_result[3] << std::endl;
+    std::cout << search_result_csv_line.str();
+    output_file << search_result_csv_line.str();
+
     output_file.close();
 };
 
@@ -56,6 +62,13 @@ void statespace_antichain_oracle_experiment(State* initial_state, int test_case_
     std::cout << search_result_csv_line.str();
     output_file << search_result_csv_line.str();
 
+    search_result = g.pfacbfs();
+    search_result_csv_line.str("");
+    search_result_csv_line << test_case_id << ",PFACBFS,EDF-VD,None,None," << search_result[0] << "," << search_result[1]
+                           << "," << search_result[2] << "," << search_result[3] << std::endl;
+    std::cout << search_result_csv_line.str();
+    output_file << search_result_csv_line.str();
+
     g.set_unsafe_oracle(&UnsafeOracle::hi_over_demand);
 
     search_result = g.bfs();
@@ -68,6 +81,13 @@ void statespace_antichain_oracle_experiment(State* initial_state, int test_case_
     search_result = g.acbfs();
     search_result_csv_line.str("");
     search_result_csv_line << test_case_id << ",ACBFS,EDF-VD,None,hi_interference," << search_result[0] << ","
+                           << search_result[1] << "," << search_result[2] << "," << search_result[3] << std::endl;
+    std::cout << search_result_csv_line.str();
+    output_file << search_result_csv_line.str();
+
+    search_result = g.pfacbfs();
+    search_result_csv_line.str("");
+    search_result_csv_line << test_case_id << ",PFACBFS,EDF-VD,None,hi_interference," << search_result[0] << ","
                            << search_result[1] << "," << search_result[2] << "," << search_result[3] << std::endl;
     std::cout << search_result_csv_line.str();
     output_file << search_result_csv_line.str();
@@ -239,12 +259,26 @@ void scheduling_performance_experiment(State* initial_state, int test_case_id, s
     std::cout << search_result_csv_line.str();
     output_file << search_result_csv_line.str();
 
+    search_result = g.pfacbfs();
+    search_result_csv_line.str("");
+    search_result_csv_line << test_case_id << ",PFACBFS,EDF-VD,all_idle_hi,hi_interference," << search_result[0] << ","
+                           << search_result[1] << "," << search_result[2] << "," << search_result[3] << std::endl;
+    std::cout << search_result_csv_line.str();
+    output_file << search_result_csv_line.str();
+
     Graph g2(new State(*initial_state), &Scheduler::lwlf, "", -1, {&SafeOracle::all_idle_hi},
              {&UnsafeOracle::hi_over_demand});
 
     search_result = g2.acbfs();
     search_result_csv_line.str("");
     search_result_csv_line << test_case_id << ",ACBFS,LWLF,all_idle_hi,hi_interference," << search_result[0] << ","
+                           << search_result[1] << "," << search_result[2] << "," << search_result[3] << std::endl;
+    std::cout << search_result_csv_line.str();
+    output_file << search_result_csv_line.str();
+
+    search_result = g2.pfacbfs();
+    search_result_csv_line.str("");
+    search_result_csv_line << test_case_id << ",PFACBFS,LWLF,all_idle_hi,hi_interference," << search_result[0] << ","
                            << search_result[1] << "," << search_result[2] << "," << search_result[3] << std::endl;
     std::cout << search_result_csv_line.str();
     output_file << search_result_csv_line.str();

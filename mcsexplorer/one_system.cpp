@@ -20,6 +20,7 @@ struct {
     std::vector<std::string> safe_oracles;
     std::vector<std::string> unsafe_oracles;
     int log_level = -1;
+    // reapproapriate period tweak for period first instead.
     bool periodic_tweak = false;
 } CONFIG;
 
@@ -191,7 +192,12 @@ int main(int argc, char** argv) {
 
     int64_t* result;
     if (CONFIG.use_idlesim) {
-        result = graph.acbfs();
+        if (CONFIG.periodic_tweak) {
+            result = graph.pfacbfs();
+        }
+        else {
+            result = graph.acbfs();
+        }
     } else {
         result = graph.bfs();
     }

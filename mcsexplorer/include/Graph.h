@@ -32,22 +32,30 @@ class Graph {
     void run_tansition(State* state, int to_run);
     std::vector<State*> completion_transition(State* state, int to_run);
     std::vector<State*> request_transition(State* state);
+    std::vector<State*> request_periodic_transition(State* state);
+    // std::vector<State*> request_aperiodic_transition(State* state);
 
     bool has_unsafe(std::vector<State*> const& states);
     void handle_safe(std::vector<State*>& states);
 
     std::vector<State*> handle_request_transition(State* state, bool is_last_leaf);
+    std::vector<State*> handle_request_periodic_transition(State* state, bool is_last_leaf);
+    // std::vector<State*> handle_request_aperiodic_transition(State* state, bool is_last_leaf);
     void handle_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
     std::vector<State*> handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
                                                      bool is_last_leaf);
 
     std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states);
+    std::vector<State*> get_periodic_neighbors(std::vector<State*> const& leaf_states);
+    // std::vector<State*> get_aperiodic_neighbors(std::vector<State*> const& leaf_states);
 
     void initialize_search(bool use_idle_antichain_current);
     int64_t* finalize_search();
 
     int64_t* bfs();
     int64_t* acbfs();
+    int64_t* pfacbfs();
+    // int64_t* pfdfs();
 
     void set_safe_oracle(std::function<bool(State*)> safe_oracle) { safe_oracles = {safe_oracle}; }
     void set_unsafe_oracle(std::function<bool(State*)> unsafe_oracle) { unsafe_oracles = {unsafe_oracle}; }

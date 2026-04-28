@@ -34,7 +34,7 @@ image_rootless_name=rlmcgraphxp
 volume_name=mcgraphxp_cache
 
 cd "${root_dir}"
-export DOCKER_BUILDKIT=0
+# export DOCKER_BUILDKIT=0
 if [ -z "${DOCKER_ROOTLESS}" ]
 then
   DOCKER_ROOTLESS=0

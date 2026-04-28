@@ -243,7 +243,6 @@ def campaign_state_space_bfs(timeout_seconds: int):
 
     return campaign01
 
-
 def campaign_schedulability(timeout_seconds: int):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
 
@@ -274,6 +273,18 @@ def campaign_schedulability(timeout_seconds: int):
             **base_config,
             "use_case": "LWLF (exact)",
             "scheduler": "lwlf",
+        },
+        {
+            **base_config,
+            "use_case": "EDF-VD (pf)",
+            "scheduler": "edfvd",
+            "periodic_tweak": True,
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (pf)",
+            "scheduler": "lwlf",
+            "periodic_tweak": True,
         },
     ]
     variables = [
@@ -591,9 +602,9 @@ def main() -> None:
     min30 = 60*30
     min15 = 60*15
 
-    parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
-    parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=16) # done
-    parallel_runner(campaign=campaign_schedulability(timeout_seconds=min15), nb_cpus=64)
+    # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
+    # parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=8) # done
+    parallel_runner(campaign=campaign_schedulability(timeout_seconds=min15), nb_cpus=32)
     # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)
     # parallel_runner(campaign=campaign_compression_table(timeout_seconds=min15), nb_cpus=128)
 
