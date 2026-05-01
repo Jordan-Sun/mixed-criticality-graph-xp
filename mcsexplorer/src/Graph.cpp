@@ -323,9 +323,6 @@ int64_t* Graph::pfbfs() {
     std::unordered_set<uint64_t> visited_hashes;
     visited_hashes.insert(leaf_states[0]->get_hash());
 
-    std::unordered_set<uint64_t> visited_periodic_hashes;
-    visited_periodic_hashes.insert(leaf_states[0]->get_hash());
-
     while (!leaf_states.empty()) {
         visited_count = visited_count + leaf_states.size();
 
@@ -343,9 +340,9 @@ int64_t* Graph::pfbfs() {
 
         for (State* neighbor : neighbors) {
             uint64_t neighbor_hash = neighbor->get_hash();
-            if (visited_periodic_hashes.find(neighbor_hash) == visited_periodic_hashes.end()) {
+            if (visited_hashes.find(neighbor_hash) == visited_hashes.end()) {
                 // the state has not been explored yet
-                visited_periodic_hashes.insert(neighbor_hash);
+                visited_hashes.insert(neighbor_hash);
                 leaf_states.push_back(neighbor);
             } else {
                 delete neighbor;
