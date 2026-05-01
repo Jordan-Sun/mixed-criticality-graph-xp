@@ -279,7 +279,6 @@ def campaign_schedulability(timeout_seconds: int):
             **base_config,
             "use_case": "EDF-VD (pf)",
             "scheduler": "edfvd",
-            "use_idlesim": False,
             "periodic_tweak": True,
         },
         # {
