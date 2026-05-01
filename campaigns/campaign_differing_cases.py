@@ -90,24 +90,42 @@ def campaign_differing_cases(
         taskset_position = int(row['taskset_position'])
         scheduler = row['scheduler']
         
-        case_config = {
+        # Constants for these cases
+        base_config = {
             "taskset_file": taskset_file,
             "taskset_position": taskset_position,
             "scheduler": scheduler,
-            # Constants for these cases
-            "use_idlesim": True,
             "safe_oracles": [],
             "unsafe_oracles": ["hi-over-demand"],
-            "periodic_tweak": False,
         }
+
+        use_cases = [
+            {
+                **base_config,
+                "use_case": "EDF-VD (exact)",
+                "use_idlesim": True,
+                "periodic_tweak": False,
+            },
+            {
+                **base_config,
+                "use_case": "EDF-VD (pf)",
+                "scheduler": "edfvd",
+                "use_idlesim": False,
+                "periodic_tweak": True,
+            },
+        ]
 
         if traces_dir_path is not None:
             taskset_stem = pathlib.Path(taskset_file).stem
-            trace_file_name = f"{taskset_stem}_pos{taskset_position:05d}_{scheduler}.dot"
-            case_config["graph_output"] = str((traces_dir_path / trace_file_name).resolve())
-            case_config["log_level"] = 1
-
-        varying_variables.append(case_config)
+        for use_case in use_cases:
+            case_config = {**base_config, **use_case}
+            if traces_dir_path is not None:
+                case_scheduler = case_config["scheduler"]
+                trace_file_name = (
+                    f"{taskset_stem}_pos{taskset_position:05d}_{case_scheduler}.dot"
+                )
+                case_config["graph_output"] = str((traces_dir_path / trace_file_name).resolve())
+            varying_variables.append(case_config)
     
     print(f"\nConfigured {len(varying_variables)} test cases")
 

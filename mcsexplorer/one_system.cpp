@@ -199,7 +199,12 @@ int main(int argc, char** argv) {
             result = graph.acbfs();
         }
     } else {
-        result = graph.bfs();
+        if (CONFIG.periodic_tweak) {
+            result = graph.pfbfs();
+        }
+        else {
+            result = graph.bfs();
+        }
     }
 
     std::cout << "Results:";

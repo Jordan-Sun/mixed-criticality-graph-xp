@@ -53,6 +53,7 @@ class Graph {
     int64_t* finalize_search();
 
     int64_t* bfs();
+    int64_t* pfbfs();
     int64_t* acbfs();
     int64_t* pfacbfs();
     // int64_t* pfdfs();

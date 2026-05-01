@@ -16,3 +16,5 @@ outputs/*.csv
 outputs/*.txt
 
 */results/*
+*.png
+*.pdf
