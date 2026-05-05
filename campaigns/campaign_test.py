@@ -265,28 +265,28 @@ def campaign_schedulability(timeout_seconds: int):
     }
 
     use_cases = [
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (exact)",
-        #     "scheduler": "edfvd",
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "LWLF (exact)",
-        #     "scheduler": "lwlf",
-        # },
+        {
+            **base_config,
+            "use_case": "EDF-VD (exact)",
+            "scheduler": "edfvd",
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (exact)",
+            "scheduler": "lwlf",
+        },
         {
             **base_config,
             "use_case": "EDF-VD (pf)",
             "scheduler": "edfvd",
             "periodic_tweak": True,
         },
-        # {
-        #     **base_config,
-        #     "use_case": "LWLF (pf)",
-        #     "scheduler": "lwlf",
-        #     "periodic_tweak": True,
-        # },
+        {
+            **base_config,
+            "use_case": "LWLF (pf)",
+            "scheduler": "lwlf",
+            "periodic_tweak": True,
+        },
     ]
     variables = [
         use_case | other_variables

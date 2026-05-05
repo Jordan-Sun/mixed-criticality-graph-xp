@@ -603,11 +603,15 @@ int64_t* Graph::pfacbfs() {
     }
 
     int periodic_depth = automaton_depth;
+
     // if the automaton is not safe, just return unsafe without searching the rest of the state space.
     if (automaton_is_safe) {
-        // then perform acbfs in the rest of the state space
+        // first clear the search
         automaton_depth = 0;
+        visited_hashes.clear();
+        visited_hashes[initial_state_hash][initial_state_idle_nats_hash] = initial_state_idle_nats_vector;
 
+        // then perform acbfs in the rest of the state space
         leaf_states = std::vector<State*>{new State(*initial_state)};
         while (!leaf_states.empty()) {
             visited_count = visited_count + leaf_states.size();
