@@ -62,23 +62,6 @@ std::vector<State*> Graph::request_periodic_transition(State* state) {
     return new_states;
 }
 
-// std::vector<State*> Graph::request_aperiodic_transition(State* state) {
-//     std::vector<State*> new_states;
-
-//     std::vector<size_t> eligibles_candidates = state->get_eligibles();
-//     std::vector<std::vector<int>> all_eligibles = power_set(eligibles_candidates);
-
-//     for (std::vector<int> const& current_eligibles : all_eligibles) {
-//         State* request_state = new State(*state);
-//         request_state->request_transition(current_eligibles);
-//         new_states.push_back(request_state);
-//     }
-
-//     delete state;
-
-//     return new_states;
-// }
-
 bool Graph::has_unsafe(std::vector<State*> const& states) {
     for (std::function<bool(State*)> unsafe_oracle : unsafe_oracles) {
         for (State* current_state : states) {
@@ -163,17 +146,6 @@ std::vector<State*> Graph::handle_request_periodic_transition(State* state, bool
     return request_states;
 }
 
-// std::vector<State*> Graph::handle_request_aperiodic_transition(State* state, bool is_last_leaf) {
-//     std::vector<State*> request_states = request_aperiodic_transition(state);
-
-//     for (size_t i = 0; i < request_states.size(); ++i) {
-//         State* request_state = request_states[i];
-//         log_request(request_state, is_last_leaf);
-//     }
-
-//     return request_states;
-// }
-
 std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states) {
     std::vector<State*> new_states;
 
@@ -253,24 +225,56 @@ void Graph::initialize_search(bool use_idle_antichain_current) {
     start = std::chrono::high_resolution_clock::now();
 }
 
-int64_t* Graph::finalize_search() {
+void Graph::finalize_search(Result& result) {
     auto stop = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
 
     graphiz_teardown();
     log_end_search();
 
-    static int64_t result[4];
-
-    result[0] = int64_t(automaton_is_safe);
-    result[1] = automaton_depth;
-    result[2] = visited_count;
-    result[3] = duration.count();
-
-    return result;
+    result.is_safe = int64_t(automaton_is_safe);
+    result.depth = automaton_depth;
+    result.visited_count = visited_count;
+    result.duration_ns = duration.count();
 }
 
-int64_t* Graph::bfs() {
+std::vector<Result> Graph::search(ExactAlgorithm exact_algorithm, std::vector<PilotHeuristics> pilot_heuristics) {
+    // First perform the pilot heuristic search if specified
+    std::vector<Result> results;
+    Result pilot_result;
+
+    // Perform the pilot heuristics in sequence, or none at all if empty.
+    for (PilotHeuristics pilot_heuristic : pilot_heuristics) {
+        switch (pilot_heuristic) {
+            case PilotHeuristics::BFS:
+                _pilot_bfs(pilot_result);
+                break;
+            case PilotHeuristics::ACBFS:
+                _pilot_acbfs(pilot_result);
+                break;
+        }
+        results.push_back(pilot_result);
+
+        // if pilot heuristic already determines the automaton to be unsafe, return immediately without continuing.
+        if (!pilot_result.is_safe) {
+            return results;
+        }
+    }
+
+    // All heuristics found the automaton to be safe, perform the exhaustive exact search.
+    switch (exact_algorithm) {
+        case ExactAlgorithm::BFS:
+            _exact_bfs(results.emplace_back());
+            break;
+        case ExactAlgorithm::ACBFS:
+            _exact_acbfs(results.emplace_back());
+            break;
+    }
+
+    return results;
+}
+
+void Graph::_exact_bfs(Result& result) {
     initialize_search(false);
 
     std::vector<State*> leaf_states{new State(*initial_state)};
@@ -306,15 +310,13 @@ int64_t* Graph::bfs() {
         }
     }
 
-    int64_t* result = finalize_search();
+    finalize_search(result);
 
     // not empty if automaton is unsafe
     for (State* unexplored_state : leaf_states) delete unexplored_state;
-
-    return result;
 }
 
-int64_t* Graph::pfbfs() {
+void Graph::_pilot_bfs(Result& result) {
     initialize_search(false);
 
     std::vector<State*> leaf_states{new State(*initial_state)};
@@ -350,50 +352,10 @@ int64_t* Graph::pfbfs() {
         }
     }
 
-    int periodic_depth = automaton_depth;
-
-    // if the automaton is not safe, just return unsafe without searching the rest of the state space.
-    if (automaton_is_safe) {
-        // then perform bfs in the rest of the state space
-        automaton_depth = 0;
+    finalize_search(result);
     
-        std::vector<State*> leaf_states{new State(*initial_state)};
-        while (!leaf_states.empty()) {
-            visited_count = visited_count + leaf_states.size();
-
-            log_step(leaf_states.size());
-
-            automaton_is_safe = not(is_fail(leaf_states) or has_unsafe(leaf_states));
-            if (not automaton_is_safe) break;
-
-            handle_safe(leaf_states);
-
-            neighbors = get_neighbors(leaf_states);
-
-            automaton_depth++;
-            leaf_states.clear();
-
-            for (State* neighbor : neighbors) {
-                uint64_t neighbor_hash = neighbor->get_hash();
-                if (visited_hashes.find(neighbor_hash) == visited_hashes.end()) {
-                    // the state has not been explored yet
-                    visited_hashes.insert(neighbor_hash);
-                    leaf_states.push_back(neighbor);
-                } else {
-                    delete neighbor;
-                }
-            }
-        }
-    }
-    
-    automaton_depth = std::max(automaton_depth, periodic_depth);
-
-    int64_t* result = finalize_search();
-
     // not empty if automaton is unsafe
     for (State* unexplored_state : leaf_states) delete unexplored_state;
-
-    return result;
 }
 
 bool pairwise_smaller_all(std::vector<int> a, std::vector<int> b) {
@@ -414,7 +376,7 @@ bool pairwise_smaller_all(std::vector<int> a, std::vector<int> b) {
     return true;
 }
 
-int64_t* Graph::acbfs() {
+void Graph::_exact_acbfs(Result & result) {
     initialize_search(true);
 
     std::vector<State*> leaf_states{new State(*initial_state)};
@@ -503,16 +465,14 @@ int64_t* Graph::acbfs() {
         }
     }
 
-    int64_t* result = finalize_search();
+    finalize_search(result);
 
     // not empty if automaton is unsafe
     for (State* unexplored_state : leaf_states) delete unexplored_state;
-
-    return result;
 }
 
 // ACBFS but search in the periodic state space first before searching the rest of the state space.
-int64_t* Graph::pfacbfs() {
+void Graph::_pilot_acbfs(Result & result) {
     initialize_search(true);
 
     std::vector<State*> leaf_states{new State(*initial_state)};
@@ -602,100 +562,9 @@ int64_t* Graph::pfacbfs() {
         }
     }
 
-    int periodic_depth = automaton_depth;
-
-    // if the automaton is not safe, just return unsafe without searching the rest of the state space.
-    if (automaton_is_safe) {
-        // first clear the search
-        automaton_depth = 0;
-        visited_hashes.clear();
-        visited_hashes[initial_state_hash][initial_state_idle_nats_hash] = initial_state_idle_nats_vector;
-
-        // then perform acbfs in the rest of the state space
-        leaf_states = std::vector<State*>{new State(*initial_state)};
-        while (!leaf_states.empty()) {
-            visited_count = visited_count + leaf_states.size();
-
-            log_step(leaf_states.size());
-
-            automaton_is_safe = not(is_fail(leaf_states) or has_unsafe(leaf_states));
-            if (not automaton_is_safe) break;
-
-            handle_safe(leaf_states);
-
-            neighbors = get_neighbors(leaf_states);
-
-            automaton_depth++;
-            leaf_states.clear();
-
-            for (State* neighbor : neighbors) {
-                uint64_t neighbor_hash = neighbor->get_hash_idle();
-
-                uint64_t neighbor_idle_nats_hash;
-                std::vector<int> neighbor_idle_nats_vector;
-                std::tie(neighbor_idle_nats_hash, neighbor_idle_nats_vector) = neighbor->get_idle_nats_pair();
-
-                if (visited_hashes.find(neighbor_hash) == visited_hashes.end()) {
-                    // this arrangement of active jobs and their respecting rct has
-                    // not been visited earlier so no visited state can simulate the
-                    // neighbor
-
-                    visited_hashes[neighbor_hash] = std::unordered_map<uint64_t, std::vector<int>>(
-                        {{neighbor_idle_nats_hash, neighbor_idle_nats_vector}});
-                    leaf_states.push_back(neighbor);
-
-                } else {
-                    // this arrangement of active jobs and their respecting rct has
-                    // been visited earlier and wether this neighbor is simulated or
-                    // not depends on the value of its nats
-                    bool neighbor_is_simulated = false;
-                    std::vector<u_int64_t> visited_is_simulated_hashes;
-
-                    if (visited_hashes[neighbor_hash].find(neighbor_idle_nats_hash) !=
-                        visited_hashes[neighbor_hash].end()) {
-                        // this exact state has already been visited and we do not
-                        // need to explore it
-
-                        log_visited(neighbor);
-
-                        delete neighbor;
-                    } else {
-                        for (const auto& [visited_idle_nat_hash, visited_idle_nat_vector] : visited_hashes[neighbor_hash]) {
-                            if (pairwise_smaller_all(visited_idle_nat_vector, neighbor_idle_nats_vector)) {
-                                neighbor_is_simulated = true;
-                                simulate_neighbor_graphviz(neighbor, visited_idle_nat_vector);
-                                break;
-                            }
-                            if (pairwise_smaller_all(neighbor_idle_nats_vector, visited_idle_nat_vector)) {
-                                // this neighbor simulates some previously visited
-                                // states which can safely be removed from memory
-                                visited_is_simulated_hashes.push_back(visited_idle_nat_hash);
-                            }
-                        }
-                        for (u_int64_t const& key : visited_is_simulated_hashes) {
-                            visited_hashes[neighbor_hash].erase(key);
-                        }
-                        if (!neighbor_is_simulated) {
-                            visited_hashes[neighbor_hash][neighbor_idle_nats_hash] = neighbor_idle_nats_vector;
-                            leaf_states.push_back(neighbor);
-                        } else {
-                            log_simulated(neighbor);
-                            delete neighbor;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    automaton_depth = std::max(automaton_depth, periodic_depth);
-
-    int64_t* result = finalize_search();
-
+    finalize_search(result);
     // not empty if automaton is unsafe
     for (State* unexplored_state : leaf_states) delete unexplored_state;
-
-    return result;
 }
 
 // GRAPHIZ FUNCTIONS

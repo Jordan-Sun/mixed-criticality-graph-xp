@@ -98,13 +98,13 @@ def campaign_state_space(timeout_seconds: int):
         {
             **base_config,
             "use_case": "ACBFS, no oracle",
-            "use_idlesim": True,
+            "exact_algorithm": "acbfs",
             "unsafe_oracles": [],
         },
         # { # as the utilisation based chart was dropped, HI over demand is useless because U = 50% which is always schedulable
         #     **base_config,
         #     "use_case": "ACBFS, oracles",
-        #     "use_idlesim": True,
+        #     "exact_algorithm": "acbfs",
         #     "unsafe_oracles": ["hi-over-demand"],
         # },
     ]
@@ -130,59 +130,59 @@ def campaign_state_space(timeout_seconds: int):
     return campaign01
 
 
-def campaign_state_space_period(timeout_seconds: int):
-    benchmark = MCSBench(timeout_seconds=timeout_seconds)
+# def campaign_state_space_period(timeout_seconds: int):
+#     benchmark = MCSBench(timeout_seconds=timeout_seconds)
 
-    taskset_files = [
-        taskset2filename(f, benchmark)
-        for f in [
-            "statespace-rtss-period-max",
-            "statespace-rtss-n-tasks",
-        ]
-    ]
+#     taskset_files = [
+#         taskset2filename(f, benchmark)
+#         for f in [
+#             "statespace-rtss-period-max",
+#             "statespace-rtss-n-tasks",
+#         ]
+#     ]
 
-    varying_variables = [
-        {
-            "taskset_file": tf,
-            "taskset_position": tp,
-        }
-        for tf in taskset_files
-        for tp in range(nb_systems(tasksystems_path=tf))
-    ]
+#     varying_variables = [
+#         {
+#             "taskset_file": tf,
+#             "taskset_position": tp,
+#         }
+#         for tf in taskset_files
+#         for tp in range(nb_systems(tasksystems_path=tf))
+#     ]
 
-    base_config = {
-        "safe_oracles": [],
-        "unsafe_oracles": [],
-        "scheduler": "edfvd",
-        "periodic_tweak": True,
-    }
+#     base_config = {
+#         "safe_oracles": [],
+#         "unsafe_oracles": [],
+#         "scheduler": "edfvd",
+#         "periodic_tweak": True, # Depracated
+#     }
 
-    use_cases = [
-        {
-            "use_case": "BFS, no oracle, periodic",
-            "use_idlesim": False,
-        },
-    ]
-    variables = [
-        base_config | use_case | other_variables
-        for use_case in use_cases
-        for other_variables in varying_variables
-    ]
+#     use_cases = [
+#         {
+#             "use_case": "BFS, no oracle, periodic",
+#             "exact_algorithm": "bfs",
+#         },
+#     ]
+#     variables = [
+#         base_config | use_case | other_variables
+#         for use_case in use_cases
+#         for other_variables in varying_variables
+#     ]
 
-    campaign01 = CampaignIterateVariables(
-        name="mcs_scale_periodic",
-        benchmark=benchmark,
-        nb_runs=1,
-        variables=variables,
-        constants={},
-        debug=False,
-        gdb=False,
-        enable_data_dir=True,
-        continuing=False,
-        benchmark_duration_seconds=None,
-    )
+#     campaign01 = CampaignIterateVariables(
+#         name="mcs_scale_periodic",
+#         benchmark=benchmark,
+#         nb_runs=1,
+#         variables=variables,
+#         constants={},
+#         debug=False,
+#         gdb=False,
+#         enable_data_dir=True,
+#         continuing=False,
+#         benchmark_duration_seconds=None,
+#     )
 
-    return campaign01
+#     return campaign01
 
 
 def campaign_state_space_bfs(timeout_seconds: int):
@@ -206,6 +206,7 @@ def campaign_state_space_bfs(timeout_seconds: int):
 
     base_config = {
         "scheduler": "edfvd",
+        "pilot_heuristics": [],
         "safe_oracles": [],
         "unsafe_oracles": [],
     }
@@ -214,12 +215,12 @@ def campaign_state_space_bfs(timeout_seconds: int):
         {
             **base_config,
             "use_case": "BFS, no oracle",
-            "use_idlesim": False,
+            "exact_algorithm": "bfs",
         },
         {
             **base_config,
             "use_case": "ACBFS, no oracle",
-            "use_idlesim": True,
+            "exact_algorithm": "acbfs",
         },
     ]
     variables = [
@@ -255,13 +256,14 @@ def campaign_schedulability(timeout_seconds: int):
         }
         for tf in taskset_files
         for tp in range(nb_systems(tasksystems_path=tf))
+        # for tp in range(10) # for testing
     ]
 
     base_config = {
-        "use_idlesim": True,
+        "exact_algorithm": "acbfs",
+        "pilot_heuristics": [],
         "safe_oracles": [],
         "unsafe_oracles": ["hi-over-demand"],
-        "periodic_tweak": False,
     }
 
     use_cases = [
@@ -272,21 +274,21 @@ def campaign_schedulability(timeout_seconds: int):
         },
         {
             **base_config,
-            "use_case": "LWLF (exact)",
-            "scheduler": "lwlf",
-        },
-        {
-            **base_config,
             "use_case": "EDF-VD (pf)",
             "scheduler": "edfvd",
-            "periodic_tweak": True,
+            "pilot_heuristics": ["acbfs"],
         },
-        {
-            **base_config,
-            "use_case": "LWLF (pf)",
-            "scheduler": "lwlf",
-            "periodic_tweak": True,
-        },
+        # {
+        #     **base_config,
+        #     "use_case": "LWLF (exact)",
+        #     "scheduler": "lwlf",
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "LWLF (pf)",
+        #     "scheduler": "lwlf",
+        #     "pilot_heuristics": ["acbfs"],
+        # },
     ]
     variables = [
         use_case | other_variables
@@ -325,7 +327,8 @@ def campaign_oracles(timeout_seconds: int):
 
     base_config = {
         "scheduler": "edfvd",
-        "use_idlesim": True,
+        "exact_algorithm": "acbfs",
+        "pilot_heuristics": [],
     }
 
     use_cases = [
@@ -403,6 +406,7 @@ def campaign_compression_table(timeout_seconds: int):
 
     base_config = {
         "scheduler": "edfvd",
+        "pilot_heuristics": [],
     }
 
     use_cases = [
@@ -411,28 +415,28 @@ def campaign_compression_table(timeout_seconds: int):
             "use_case": "BFS",
             "safe_oracles": [],
             "unsafe_oracles": [],
-            "use_idlesim": False,
+            "exact_algorithm": "bfs",
         },
         {
             **base_config,
             "use_case": "ACBFS",
             "safe_oracles": [],
             "unsafe_oracles": [],
-            "use_idlesim": True,
+            "exact_algorithm": "acbfs",
         },
         {
             **base_config,
             "use_case": "BFS, HI over demand",
             "safe_oracles": [],
             "unsafe_oracles": ["hi-over-demand"],
-            "use_idlesim": False,
+            "exact_algorithm": "bfs",
         },
         {
             **base_config,
             "use_case": "ACBFS, HI over demand",
             "safe_oracles": [],
             "unsafe_oracles": ["hi-over-demand"],
-            "use_idlesim": True,
+            "exact_algorithm": "acbfs",
         },
     ]
     variables = [

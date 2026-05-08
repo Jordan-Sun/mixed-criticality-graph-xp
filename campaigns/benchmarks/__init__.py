@@ -63,11 +63,11 @@ class MCSBench(Benchmark):
         return [
             "taskset_file",
             "taskset_position",
-            "use_idlesim",
             "scheduler",
             "safe_oracles",
             "unsafe_oracles",
-            "periodic_tweak",
+            "exact_algorithm",
+            "pilot_heuristics",
             "log_level",
             "graph_output",
         ]
@@ -121,11 +121,11 @@ class MCSBench(Benchmark):
         benchmark_duration_seconds: int,
         taskset_file: PathType,
         taskset_position: int,
-        use_idlesim: bool,
         scheduler: str,
+        exact_algorithm: str,
+        pilot_heuristics: List[str],
         safe_oracles: List[str],
         unsafe_oracles: List[str],
-        periodic_tweak: bool = False,
         log_level: int | None = None,
         graph_output: PathType | None = None,
         **kwargs,
@@ -134,11 +134,11 @@ class MCSBench(Benchmark):
             benchmark_duration_seconds=benchmark_duration_seconds,
             taskset_file=taskset_file,
             taskset_position=taskset_position,
-            use_idlesim=use_idlesim,
             scheduler=scheduler,
+            exact_algorithm=exact_algorithm,
+            pilot_heuristics=pilot_heuristics,
             safe_oracles=safe_oracles,
             unsafe_oracles=unsafe_oracles,
-            periodic_tweak=periodic_tweak,
             log_level=log_level,
             graph_output=graph_output,
             **kwargs,
@@ -169,15 +169,15 @@ class MCSBench(Benchmark):
             str(taskset_position),
             "--scheduler",
             scheduler,
+            "--exact-algorithm",
+            exact_algorithm,
         ]
-        if use_idlesim:
-            cmd_options.append("--use-idlesim")
+        if pilot_heuristics:
+            cmd_options += ["--pilot-heuristics", ",".join(pilot_heuristics)]
         if safe_oracles:
             cmd_options += ["--safe-oracles", ",".join(safe_oracles)]
         if unsafe_oracles:
             cmd_options += ["--unsafe-oracles", ",".join(unsafe_oracles)]
-        if periodic_tweak:
-            cmd_options.append("--periodic-tweak")
         if log_level is not None:
             cmd_options += ["--log-level", str(log_level)]
         if graph_output is not None:
