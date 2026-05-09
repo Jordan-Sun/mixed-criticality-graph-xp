@@ -28,9 +28,11 @@ void statespace_antichain_experiment(State* initial_state, int test_case_id, std
 
     Graph g(initial_state, &Scheduler::edfvd, "", -1, {}, {});
 
-    print_results(test_case_id, "EDF-VD", "None", "None", g.search(ExactAlgorithm::BFS), std::cout, output_file);
-    print_results(test_case_id, "EDF-VD", "None", "None", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
-    print_results(test_case_id, "EDF-VD", "None", "None", g.search(ExactAlgorithm::ACBFS, {PilotHeuristics::ACBFS}),
+    print_results(test_case_id, "EDF-VD", "None", "None", g.search({SearchAlgorithm::NONE, SearchAlgorithm::BFS}),
+                  std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "None", g.search({SearchAlgorithm::NONE, SearchAlgorithm::ACBFS}),
+                  std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "None", g.search({SearchAlgorithm::PACBFS, SearchAlgorithm::ACBFS}),
                   std::cout, output_file);
 
     output_file.close();
@@ -41,20 +43,19 @@ void statespace_antichain_oracle_experiment(State* initial_state, int test_case_
     output_file.open(output_path, std::ios::in | std::ios::out | std::ios::ate);
 
     Graph g(initial_state, &Scheduler::edfvd, "", -1, {}, {});
+    std::vector<SearchAlgorithm> exact_bfs{SearchAlgorithm::NONE, SearchAlgorithm::BFS};
+    std::vector<SearchAlgorithm> exact_acbfs{SearchAlgorithm::NONE, SearchAlgorithm::ACBFS};
+    std::vector<SearchAlgorithm> pf_acbfs{SearchAlgorithm::PACBFS, SearchAlgorithm::ACBFS};
 
-    print_results(test_case_id, "EDF-VD", "None", "None", g.search(ExactAlgorithm::BFS), std::cout, output_file);
-    print_results(test_case_id, "EDF-VD", "None", "None", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
-    print_results(test_case_id, "EDF-VD", "None", "None", g.search(ExactAlgorithm::ACBFS, {PilotHeuristics::ACBFS}),
-                  std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "None", g.search(exact_bfs), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "None", g.search(exact_acbfs), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "None", g.search(pf_acbfs), std::cout, output_file);
 
     g.set_unsafe_oracle(&UnsafeOracle::hi_over_demand);
 
-    print_results(test_case_id, "EDF-VD", "None", "hi_interference", g.search(ExactAlgorithm::BFS), std::cout,
-                  output_file);
-    print_results(test_case_id, "EDF-VD", "None", "hi_interference", g.search(ExactAlgorithm::ACBFS), std::cout,
-                  output_file);
-    print_results(test_case_id, "EDF-VD", "None", "hi_interference",
-                  g.search(ExactAlgorithm::ACBFS, {PilotHeuristics::ACBFS}), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "hi_interference", g.search(exact_bfs), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "hi_interference", g.search(exact_acbfs), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "hi_interference", g.search(pf_acbfs), std::cout, output_file);
 
     output_file.close();
 };
@@ -64,40 +65,40 @@ void statespace_oracle_experiment(State* initial_state, int test_case_id, std::s
     output_file.open(output_path, std::ios::in | std::ios::out | std::ios::ate);
 
     Graph g(initial_state, &Scheduler::edfvd, "", -1, {}, {});
+    std::vector<SearchAlgorithm> exact_acbfs{SearchAlgorithm::NONE, SearchAlgorithm::ACBFS};
 
-    print_results(test_case_id, "EDF-VD", "None", "None", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "None", g.search(exact_acbfs), std::cout, output_file);
 
     g.set_safe_oracle(&SafeOracle::all_idle_hi);
-    print_results(test_case_id, "EDF-VD", "None", "all_idle_hi", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "all_idle_hi", g.search(exact_acbfs), std::cout, output_file);
 
     g.clear_safe_oracle();
     g.set_safe_oracle(&SafeOracle::edf_carryoverjobs);
-    print_results(test_case_id, "EDF-VD", "None", "edf_carryoverjobs", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "edf_carryoverjobs", g.search(exact_acbfs), std::cout, output_file);
 
     g.clear_safe_oracle();
     g.set_unsafe_oracle(&UnsafeOracle::over_demand);
-    print_results(test_case_id, "EDF-VD", "None", "interference", g.search(ExactAlgorithm::ACBFS), std::cout,
-                  output_file);
+    print_results(test_case_id, "EDF-VD", "None", "interference", g.search(exact_acbfs), std::cout, output_file);
 
     g.clear_safe_oracle();
     g.set_unsafe_oracle(&UnsafeOracle::hi_over_demand);
-    print_results(test_case_id, "EDF-VD", "None", "hi_interference", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "hi_interference", g.search(exact_acbfs), std::cout, output_file);
 
     g.clear_unsafe_oracle();
     g.set_unsafe_oracle(&UnsafeOracle::laxity);
-    print_results(test_case_id, "EDF-VD", "None", "laxity", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "laxity", g.search(exact_acbfs), std::cout, output_file);
 
     g.clear_unsafe_oracle();
     g.set_unsafe_oracle(&UnsafeOracle::worst_laxity);
-    print_results(test_case_id, "EDF-VD", "None", "worst_laxity", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "worst_laxity", g.search(exact_acbfs), std::cout, output_file);
 
     g.clear_unsafe_oracle();
     g.set_unsafe_oracle(&UnsafeOracle::sum_sorted_laxities);
-    print_results(test_case_id, "EDF-VD", "None", "sum_sorted_laxities", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "sum_sorted_laxities", g.search(exact_acbfs), std::cout, output_file);
 
     g.clear_unsafe_oracle();
     g.set_unsafe_oracle(&UnsafeOracle::sum_sorted_worst_laxities);
-    print_results(test_case_id, "EDF-VD", "None", "sum_sorted_worst_laxities", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "None", "sum_sorted_worst_laxities", g.search(exact_acbfs), std::cout, output_file);
 
     output_file.close();
 };
@@ -145,17 +146,20 @@ void scheduling_performance_experiment(State* initial_state, int test_case_id, s
 
     Graph g(new State(*initial_state), &Scheduler::edfvd, "", -1, {&SafeOracle::all_idle_hi},
             {&UnsafeOracle::hi_over_demand});
+    std::vector<SearchAlgorithm> exact_acbfs{SearchAlgorithm::NONE, SearchAlgorithm::ACBFS};
+    std::vector<SearchAlgorithm> pf_acbfs{SearchAlgorithm::PACBFS, SearchAlgorithm::ACBFS};
 
-    print_results(test_case_id, "EDF-VD", "all_idle_hi", "hi_interference", g.search(ExactAlgorithm::ACBFS), std::cout, output_file);
-    print_results(test_case_id, "ACBFS", "all_idle_hi", "hi_interference",
-                  g.search(ExactAlgorithm::ACBFS, {PilotHeuristics::ACBFS}), std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "all_idle_hi", "hi_interference", g.search(exact_acbfs),
+                  std::cout, output_file);
+    print_results(test_case_id, "EDF-VD", "all_idle_hi", "hi_interference", g.search(pf_acbfs), std::cout,
+                  output_file);
 
     Graph g2(new State(*initial_state), &Scheduler::lwlf, "", -1, {&SafeOracle::all_idle_hi},
              {&UnsafeOracle::hi_over_demand});
 
-    print_results(test_case_id, "LWLF", "all_idle_hi", "hi_interference", g2.search(ExactAlgorithm::ACBFS), std::cout,
+    print_results(test_case_id, "LWLF", "all_idle_hi", "hi_interference", g2.search(exact_acbfs), std::cout,
                   output_file);
-    print_results(test_case_id, "LWLF", "all_idle_hi", "hi_interference", g2.search(ExactAlgorithm::ACBFS, {PilotHeuristics::ACBFS}), std::cout,
+    print_results(test_case_id, "LWLF", "all_idle_hi", "hi_interference", g2.search(pf_acbfs), std::cout,
                   output_file);
 
     output_file.close();
@@ -241,7 +245,7 @@ void dev_main() {
     unsafe_oracles = {&UnsafeOracle::hi_over_demand};
 
     Graph g(s, &Scheduler::lwlf, "./test.dot", 3, safe_oracles, unsafe_oracles);
-    g.search(ExactAlgorithm::ACBFS);
+    g.search({SearchAlgorithm::ACBFS});
 }
 
 int main(int argc, char** argv) {

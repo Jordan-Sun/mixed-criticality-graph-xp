@@ -21,8 +21,7 @@ struct {
     std::string graph_output_path;
     size_t taskset_position;
     std::string scheduler = "edfvd";
-    std::string exact_algorithm = "bfs";
-    std::vector<std::string> pilot_heuristics;
+    std::vector<std::string> search_algorithms;
     std::vector<std::string> safe_oracles;
     std::vector<std::string> unsafe_oracles;
     int log_level = -1;
@@ -93,19 +92,14 @@ void parse_args(int argc, char** argv) {
             const std::string scheduler = argv[i];
             CONFIG.scheduler = scheduler;
             i++;
-        } else if ("--exact-algorithm" == argument) {
+        } else if ("--search-algorithms" == argument) {
             i++;
-            const std::string exact_algorithm = argv[i];
-            CONFIG.exact_algorithm = exact_algorithm;
-            i++;
-        } else if ("--pilot-heuristics" == argument) {
-            i++;
-            const std::string pilot_heuristics = argv[i];
-            
+            const std::string search_algorithms = argv[i];
+
             std::string token;
-            std::istringstream tokenStream(pilot_heuristics);
+            std::istringstream tokenStream(search_algorithms);
             while (std::getline(tokenStream, token, ',')) {
-                CONFIG.pilot_heuristics.push_back(token);
+                CONFIG.search_algorithms.push_back(token);
             }
             i++;
         } else if ("--safe-oracles" == argument) {
@@ -150,10 +144,9 @@ int main(int argc, char** argv) {
     std::cout << "Arguments: " << std::endl;
     std::cout << "  input file: " << CONFIG.inputfile_path << std::endl;
     std::cout << "  taskset number: " << CONFIG.taskset_position << std::endl;
-    std::cout << "  exact-algorithm: " << CONFIG.exact_algorithm << std::endl;
-    std::cout << "  pilot-heuristics: " << (CONFIG.pilot_heuristics.empty() ? "None" : "");
-    for (std::string pilot_heuristic : CONFIG.pilot_heuristics) {
-        std::cout << pilot_heuristic << " ";
+    std::cout << "  search-algorithms: " << (CONFIG.search_algorithms.empty() ? "None" : "");
+    for (std::string search_algorithm : CONFIG.search_algorithms) {
+        std::cout << search_algorithm << " ";
     }
     std::cout << std::endl;
     std::cout << "  scheduler: " << CONFIG.scheduler << std::endl;
@@ -223,41 +216,35 @@ int main(int argc, char** argv) {
 
     Graph graph(start_state, scheduler, CONFIG.graph_output_path, CONFIG.log_level, safe_oracles, unsafe_oracles);
 
-    ExactAlgorithm exact_algorithm;
-    if ("bfs" == CONFIG.exact_algorithm) {
-        exact_algorithm = ExactAlgorithm::BFS;
-    } else if ("acbfs" == CONFIG.exact_algorithm) {
-        exact_algorithm = ExactAlgorithm::ACBFS;
-    } else {
-        std::cerr << "Bad exact algorithm: " << CONFIG.exact_algorithm << std::endl;
-        // exit because we need at least one exact algorithm to run the search
-        return 1;
+    std::vector<SearchAlgorithm> algorithms;
+    for (const auto& algorithm_name : CONFIG.search_algorithms) {
+        algorithms.push_back(from_name(algorithm_name));
     }
 
-    std::vector<PilotHeuristics> pilot_heuristics;
-    for (std::string pilot_heuristic_str : CONFIG.pilot_heuristics) {
-        if ("bfs" == pilot_heuristic_str) {
-            pilot_heuristics.push_back(PilotHeuristics::BFS);
-        } else if ("acbfs" == pilot_heuristic_str) {
-            pilot_heuristics.push_back(PilotHeuristics::ACBFS);
-        } else {
-            std::cerr << "Bad pilot heuristic: " << pilot_heuristic_str << std::endl;
-        }
-    }
-
-    std::vector<Result> results = graph.search(exact_algorithm, pilot_heuristics);
-
+    std::vector<Result> results = graph.search(algorithms);
     std::cout << "Results: ";
+    u_int64_t duration_ns = 0;
     for (size_t i = 0; i < results.size(); i++) {
         const auto& result = results[i];
         std::cout << "is_safe_" << i << "=" << (result.is_safe == 1 ? "True" : "False") << ";";
         std::cout << "automaton_depth_" << i << "=" << result.depth << ";";
         std::cout << "visited_count_" << i << "=" << result.visited_count << ";";
         std::cout << "duration_ns_" << i << "=" << result.duration_ns;
+        duration_ns += result.duration_ns;
         if (i < results.size() - 1) {
-            std::cout << "; ";
+            std::cout << ";";
         }
     }
+    // Fill in the remaining using the is_safe from the last stage
+    bool is_safe = results.back().is_safe;
+    for (size_t i = results.size(); i < CONFIG.search_algorithms.size(); i++) {
+        std::cout << ";is_safe_" << i << "=" << (is_safe == 1 ? "True" : "False") << ";";
+        std::cout << "automaton_depth_" << i << "=0;";
+        std::cout << "visited_count_" << i << "=0;";
+        std::cout << "duration_ns_" << i << "=0";
+    }
+    // Print the total duration and overall is_safe result
+    std::cout << ";is_safe=" << (is_safe == 1 ? "True" : "False") << ";duration_ns=" << duration_ns;
 
     return 0;
 }

@@ -238,37 +238,35 @@ void Graph::finalize_search(Result& result) {
     result.duration_ns = duration.count();
 }
 
-std::vector<Result> Graph::search(ExactAlgorithm exact_algorithm, std::vector<PilotHeuristics> pilot_heuristics) {
+std::vector<Result> Graph::search(std::vector<SearchAlgorithm> algorithms) {
     // First perform the pilot heuristic search if specified
     std::vector<Result> results;
-    Result pilot_result;
 
     // Perform the pilot heuristics in sequence, or none at all if empty.
-    for (PilotHeuristics pilot_heuristic : pilot_heuristics) {
-        switch (pilot_heuristic) {
-            case PilotHeuristics::BFS:
-                _pilot_bfs(pilot_result);
+    for (SearchAlgorithm algorithm : algorithms) {
+        Result result;
+        switch (algorithm) {
+            case SearchAlgorithm::BFS:
+                _exact_bfs(result);
                 break;
-            case PilotHeuristics::ACBFS:
-                _pilot_acbfs(pilot_result);
+            case SearchAlgorithm::ACBFS:
+                _exact_acbfs(result);
                 break;
+            case SearchAlgorithm::PBFS:
+                _pilot_bfs(result);
+                break;
+            case SearchAlgorithm::PACBFS:
+                _pilot_acbfs(result);
+                break;
+            default:
+                _dummy(result);
         }
-        results.push_back(pilot_result);
+        results.push_back(result);
 
         // if pilot heuristic already determines the automaton to be unsafe, return immediately without continuing.
-        if (!pilot_result.is_safe) {
+        if (!result.is_safe) {
             return results;
         }
-    }
-
-    // All heuristics found the automaton to be safe, perform the exhaustive exact search.
-    switch (exact_algorithm) {
-        case ExactAlgorithm::BFS:
-            _exact_bfs(results.emplace_back());
-            break;
-        case ExactAlgorithm::ACBFS:
-            _exact_acbfs(results.emplace_back());
-            break;
     }
 
     return results;

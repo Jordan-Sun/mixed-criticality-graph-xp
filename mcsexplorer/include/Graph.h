@@ -48,8 +48,8 @@ class Graph {
     void initialize_search(bool use_idle_antichain_current);
     void finalize_search(Result& result);
 
-    // Searches using the pilot heuristics first in that order and finally the exact algorithm if all pilot heuristics does not reject the automaton.
-    std::vector<Result> search(ExactAlgorithm exact_algorithm, std::vector<PilotHeuristics> pilot_heuristics = {});
+    // Searches using algorithms in order, returning early upon unsafe states and returning the results of all algorithms run until then.
+    std::vector<Result> search(std::vector<SearchAlgorithm> algorithms = {});
 
     void set_safe_oracle(std::function<bool(State*)> safe_oracle) { safe_oracles = {safe_oracle}; }
     void set_unsafe_oracle(std::function<bool(State*)> unsafe_oracle) { unsafe_oracles = {unsafe_oracle}; }
@@ -93,6 +93,15 @@ class Graph {
     u_int64_t visited_count;
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
     std::chrono::nanoseconds duration;
+
+    // Dummy placeholder
+    void _dummy(Result& result) {
+      result.algorithm = SearchAlgorithm::NONE;
+      result.is_safe = true;
+      result.depth = 0;
+      result.visited_count = 0;
+      result.duration_ns = 0;
+    }
 
     // Exact algorithms
     void _exact_bfs(Result& result);

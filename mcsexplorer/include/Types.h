@@ -16,50 +16,54 @@ static inline Criticality int2crit(int value) {
     throw std::runtime_error("Unknown given value for criticality");
 }
 
-enum class ExactAlgorithm { BFS, ACBFS };
-
-static inline bool _uses_idle_antichain(ExactAlgorithm exact_algorithm) {
-    return exact_algorithm == ExactAlgorithm::ACBFS;
-}
-
-static inline std::string _get_name(ExactAlgorithm exact_algorithm) {
-    switch (exact_algorithm) {
-        case ExactAlgorithm::BFS:
-            return "BFS";
-        case ExactAlgorithm::ACBFS:
-            return "ACBFS";
-    }
-    return "UnknownExactAlgorithm";
-}
-
-enum class PilotHeuristics { BFS, ACBFS };
-
-static inline bool _uses_idle_antichain(PilotHeuristics pilot_heuristic) {
-    return pilot_heuristic == PilotHeuristics::ACBFS;
-}
-
-static inline std::string _get_name(PilotHeuristics pilot_heuristic) {
-    switch (pilot_heuristic) {
-        case PilotHeuristics::BFS:
-            return "PBFS";
-        case PilotHeuristics::ACBFS:
-            return "PACBFS";
-    }
-    return "UnknownPilotHeuristic";
-}
-
-typedef std::variant<ExactAlgorithm, PilotHeuristics> SearchAlgorithm;
-
-static inline bool uses_idle_antichain(SearchAlgorithm algorithm) {
-    return std::visit([](auto&& alg) { return _uses_idle_antichain(alg); }, algorithm);
-}
+enum class SearchAlgorithm {
+    // Dummy placeholder
+    NONE,
+    // Exact algorithms
+    BFS,
+    ACBFS,
+    // Pilot heuristics
+    PBFS,
+    PACBFS,
+};
 
 static inline std::string get_name(SearchAlgorithm algorithm) {
-    return std::visit([](auto&& alg) { return _get_name(alg); }, algorithm);
+    switch (algorithm) {
+        case SearchAlgorithm::BFS:
+            return "BFS";
+        case SearchAlgorithm::ACBFS:
+            return "ACBFS";
+        case SearchAlgorithm::PBFS:
+            return "PBFS";
+        case SearchAlgorithm::PACBFS:
+            return "PACBFS";
+        default:
+            return "None";
+    }
+}
+
+static inline SearchAlgorithm from_name(std::string name) {
+    if ("bfs" == name) return SearchAlgorithm::BFS;
+    if ("acbfs" == name) return SearchAlgorithm::ACBFS;
+    if ("pbfs" == name) return SearchAlgorithm::PBFS;
+    if ("pacbfs" == name) return SearchAlgorithm::PACBFS;
+    if ("none" == name) return SearchAlgorithm::NONE;
+
+    throw std::runtime_error("Unknown search algorithm name: " + name);
+}
+
+static inline bool uses_idle_antichain(SearchAlgorithm algorithm) {
+    switch (algorithm) {
+        case SearchAlgorithm::ACBFS:
+        case SearchAlgorithm::PACBFS:
+            return true;
+        default:
+            return false;
+    }
 }
 
 typedef struct Result_t {
-    std::variant<ExactAlgorithm, PilotHeuristics> algorithm;
+    SearchAlgorithm algorithm;
     bool is_safe = true;
     int depth = 0;
     u_int64_t visited_count = 0;

@@ -66,8 +66,7 @@ class MCSBench(Benchmark):
             "scheduler",
             "safe_oracles",
             "unsafe_oracles",
-            "exact_algorithm",
-            "pilot_heuristics",
+            "search_algorithms",
             "log_level",
             "graph_output",
         ]
@@ -122,8 +121,7 @@ class MCSBench(Benchmark):
         taskset_file: PathType,
         taskset_position: int,
         scheduler: str,
-        exact_algorithm: str,
-        pilot_heuristics: List[str],
+        search_algorithms: List[str],
         safe_oracles: List[str],
         unsafe_oracles: List[str],
         log_level: int | None = None,
@@ -135,8 +133,7 @@ class MCSBench(Benchmark):
             taskset_file=taskset_file,
             taskset_position=taskset_position,
             scheduler=scheduler,
-            exact_algorithm=exact_algorithm,
-            pilot_heuristics=pilot_heuristics,
+            search_algorithms=search_algorithms,
             safe_oracles=safe_oracles,
             unsafe_oracles=unsafe_oracles,
             log_level=log_level,
@@ -169,11 +166,9 @@ class MCSBench(Benchmark):
             str(taskset_position),
             "--scheduler",
             scheduler,
-            "--exact-algorithm",
-            exact_algorithm,
+            "--search-algorithms",
+            ",".join(search_algorithms),
         ]
-        if pilot_heuristics:
-            cmd_options += ["--pilot-heuristics", ",".join(pilot_heuristics)]
         if safe_oracles:
             cmd_options += ["--safe-oracles", ",".join(safe_oracles)]
         if unsafe_oracles:
