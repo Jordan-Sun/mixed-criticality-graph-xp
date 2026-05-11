@@ -263,41 +263,41 @@ def campaign_schedulability(timeout_seconds: int):
     }
 
     use_cases = [
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["none", "none", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PAC-AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
+        # },
         {
             **base_config,
-            "use_case": "EDF-VD (AC)",
+            "use_case": "EDF-VD (PAC-P-AC)",
             "scheduler": "edfvd",
-            "search_algorithms": ["none", "none", "acbfs"],
+            "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
         },
+        # {
+        #     **base_config,
+        #     "use_case": "LWLF (AC)",
+        #     "scheduler": "lwlf",
+        #     "search_algorithms": ["none", "none", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "LWLF (PAC-AC)",
+        #     "scheduler": "lwlf",
+        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
+        # },
         {
             **base_config,
-            "use_case": "EDF-VD (PAC-AC)",
-            "scheduler": "edfvd",
-            "search_algorithms": ["none", "pacbfs", "acbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "EDF-VD (P-PAC-AC)",
-            "scheduler": "edfvd",
-            "search_algorithms": ["pbfs", "pacbfs", "acbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "LWLF (AC)",
+            "use_case": "LWLF (PAC-P-AC)",
             "scheduler": "lwlf",
-            "search_algorithms": ["none", "none", "acbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "LWLF (PAC-AC)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["none", "pacbfs", "acbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "LWLF (P-PAC-AC)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["pbfs", "pacbfs", "acbfs"],
+            "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
         },
     ]
     variables = [
