@@ -267,38 +267,38 @@ def campaign_schedulability(timeout_seconds: int):
         #     **base_config,
         #     "use_case": "EDF-VD (AC)",
         #     "scheduler": "edfvd",
-        #     "search_algorithms": ["none", "none", "acbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (PAC-AC)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
+        #     "search_algorithms": ["acbfs"],
         # },
         {
             **base_config,
-            "use_case": "EDF-VD (PAC-P-AC)",
+            "use_case": "EDF-VD (DFS)",
             "scheduler": "edfvd",
-            "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
+            "search_algorithms": ["dfs"],
         },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PDFS)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["pdfs"],
+        # },
         # {
         #     **base_config,
         #     "use_case": "LWLF (AC)",
         #     "scheduler": "lwlf",
-        #     "search_algorithms": ["none", "none", "acbfs"],
+        #     "search_algorithms": ["acbfs"],
         # },
         # {
         #     **base_config,
-        #     "use_case": "LWLF (PAC-AC)",
+        #     "use_case": "LWLF (DFS)",
         #     "scheduler": "lwlf",
-        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
+        #     "search_algorithms": ["dfs"],
         # },
-        {
-            **base_config,
-            "use_case": "LWLF (PAC-P-AC)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
-        },
+        # {
+        #     **base_config,
+        #     "use_case": "LWLF (PDFS)",
+        #     "scheduler": "lwlf",
+        #     "search_algorithms": ["pdfs"],
+        # },
     ]
     variables = [
         use_case | other_variables
@@ -321,6 +321,84 @@ def campaign_schedulability(timeout_seconds: int):
 
     return campaign01
 
+def campaign_chained(timeout_seconds: int):
+    benchmark = MCSBench(timeout_seconds=timeout_seconds)
+
+    taskset_files = [taskset2filename("scheduling-rtss", benchmark)]
+
+    varying_variables = [
+        {
+            "taskset_file": tf,
+            "taskset_position": tp,
+        }
+        for tf in taskset_files
+        for tp in range(nb_systems(tasksystems_path=tf))
+        # for tp in range(10) # for testing
+    ]
+
+    base_config = {
+        "safe_oracles": [],
+        "unsafe_oracles": ["hi-over-demand"],
+    }
+
+    use_cases = [
+        {
+            **base_config,
+            "use_case": "EDF-VD (AC)",
+            "scheduler": "edfvd",
+            "search_algorithms": ["none", "none", "acbfs"],
+        },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PAC-AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PAC-P-AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "LWLF (AC)",
+        #     "scheduler": "lwlf",
+        #     "search_algorithms": ["none", "none", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "LWLF (PAC-AC)",
+        #     "scheduler": "lwlf",
+        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "LWLF (PAC-P-AC)",
+        #     "scheduler": "lwlf",
+        #     "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
+        # },
+    ]
+    variables = [
+        use_case | other_variables
+        for use_case in use_cases
+        for other_variables in varying_variables
+    ]
+
+    campaign01 = CampaignIterateVariables(
+        name="mcs_schedulability",
+        benchmark=MCSBench(timeout_seconds=timeout_seconds),
+        nb_runs=1,
+        variables=variables,
+        constants={},
+        debug=False,
+        gdb=False,
+        enable_data_dir=True,
+        continuing=False,
+        benchmark_duration_seconds=None,
+    )
+
+    return campaign01
 
 def campaign_oracles(timeout_seconds: int):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)

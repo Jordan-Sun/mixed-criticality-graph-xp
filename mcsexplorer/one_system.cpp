@@ -66,6 +66,16 @@ State* read_task_set(std::string const& input_path, int offset = 0) {
     exit(1);
 }
 
+int usage(int argc, char** argv) {
+    std::string program_name = (argc > 0) ? argv[0] : "mcsexplorer";
+    std::cerr << "Usage: " << program_name
+              << " --taskset-file <path> --taskset-position <position> [--scheduler <scheduler>] "
+                 "[--search-algorithms <algorithm1,algorithm2,...>] [--safe-oracles <oracle1,oracle2,...>] "
+                 "[--unsafe-oracles <oracle1,oracle2,...>] [--log-level <level>] [--graph-output <path>]"
+              << std::endl;
+    return 1;
+}
+
 void parse_args(int argc, char** argv) {
     int i = 1;
     while (i < argc) {
@@ -140,6 +150,10 @@ void parse_args(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
+    if (argc <= 1) {
+        return usage(argc, argv);
+    }
+
     parse_args(argc, argv);
     std::cout << "Arguments: " << std::endl;
     std::cout << "  input file: " << CONFIG.inputfile_path << std::endl;

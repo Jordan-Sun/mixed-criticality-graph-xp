@@ -36,16 +36,14 @@ class Graph {
     bool has_unsafe(std::vector<State*> const& states);
     void handle_safe(std::vector<State*>& states);
 
-    std::vector<State*> handle_request_transition(State* state, bool is_last_leaf);
-    std::vector<State*> handle_request_periodic_transition(State* state, bool is_last_leaf);
+    std::vector<State*> handle_request_transition(State* state, bool is_last_leaf, bool periodic_only = false);
     void handle_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
     std::vector<State*> handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
                                                      bool is_last_leaf);
 
-    std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states);
-    std::vector<State*> get_periodic_neighbors(std::vector<State*> const& leaf_states);
+    std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only = false);
 
-    void initialize_search(bool use_idle_antichain_current);
+    void initialize_search(SearchAlgorithm algorithm);
     void finalize_search(Result& result);
 
     // Searches using algorithms in order, returning early upon unsafe states and returning the results of all algorithms run until then.
@@ -66,6 +64,7 @@ class Graph {
     void log_start_search();
     void log_end_search();
     void log_step(int leaf_states_size);
+    void log_fail(State* fail_state);
     void log_unsafe(State* unsafe_state);
     void log_safe(State* safe_state);
     void log_start(State* state, bool is_last_leaf);
@@ -88,7 +87,7 @@ class Graph {
     std::vector<std::function<bool(State*)>> unsafe_oracles;
 
     bool automaton_is_safe;
-    bool use_idle_antichain;
+    SearchAlgorithm search_algorithm;
     int automaton_depth;
     u_int64_t visited_count;
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
@@ -103,13 +102,10 @@ class Graph {
       result.duration_ns = 0;
     }
 
-    // Exact algorithms
-    void _exact_bfs(Result& result);
-    void _exact_acbfs(Result& result);
-
-    // Pilot heuristics
-    void _pilot_bfs(Result& result);
-    void _pilot_acbfs(Result& result);
+    // Algorithms
+    void _bfs(Result& result, bool periodic_only = false);
+    void _acbfs(Result& result, bool periodic_only = false);
+    void _dfs(Result& result, bool periodic_only = false);
 };
 
 #endif

@@ -22,9 +22,11 @@ enum class SearchAlgorithm {
     // Exact algorithms
     BFS,
     ACBFS,
-    // Pilot heuristics
+    DFS,
+    // Periodic counterparts
     PBFS,
     PACBFS,
+    PDFS,
 };
 
 static inline std::string get_name(SearchAlgorithm algorithm) {
@@ -33,10 +35,33 @@ static inline std::string get_name(SearchAlgorithm algorithm) {
             return "BFS";
         case SearchAlgorithm::ACBFS:
             return "ACBFS";
+        case SearchAlgorithm::DFS:
+            return "DFS";
         case SearchAlgorithm::PBFS:
             return "PBFS";
         case SearchAlgorithm::PACBFS:
             return "PACBFS";
+        case SearchAlgorithm::PDFS:
+            return "PDFS";
+        default:
+            return "None";
+    }
+}
+
+static inline std::string get_full_name(SearchAlgorithm algorithm) {
+    switch (algorithm) {
+        case SearchAlgorithm::BFS:
+            return "Breadth First Search";
+        case SearchAlgorithm::ACBFS:
+            return "Antichain Breadth First Search";
+        case SearchAlgorithm::DFS:
+            return "Depth First Search";
+        case SearchAlgorithm::PBFS:
+            return "Periodic Breadth First Search";
+        case SearchAlgorithm::PACBFS:
+            return "Periodic Antichain Breadth First Search";
+        case SearchAlgorithm::PDFS:
+            return "Periodic Depth First Search";
         default:
             return "None";
     }
@@ -45,8 +70,10 @@ static inline std::string get_name(SearchAlgorithm algorithm) {
 static inline SearchAlgorithm from_name(std::string name) {
     if ("bfs" == name) return SearchAlgorithm::BFS;
     if ("acbfs" == name) return SearchAlgorithm::ACBFS;
+    if ("dfs" == name) return SearchAlgorithm::DFS;
     if ("pbfs" == name) return SearchAlgorithm::PBFS;
     if ("pacbfs" == name) return SearchAlgorithm::PACBFS;
+    if ("pdfs" == name) return SearchAlgorithm::PDFS;
     if ("none" == name) return SearchAlgorithm::NONE;
 
     throw std::runtime_error("Unknown search algorithm name: " + name);
