@@ -422,23 +422,25 @@ void Graph::_dfs(Result& result, bool periodic_only) {
         automaton_depth = std::max(automaton_depth, from_depth);
 
         if (current_state->is_fail()) {
+            automaton_is_safe = false;
             log_fail(current_state);
             break;
         }
 
-        // for (std::function<bool(State*)> unsafe_oracle : unsafe_oracles) {
-        //     if (unsafe_oracle(current_state)) {
-        //         log_unsafe(current_state);
-        //         break;
-        //     }
-        // }
+        for (std::function<bool(State*)> unsafe_oracle : unsafe_oracles) {
+            if (unsafe_oracle(current_state)) {
+                automaton_is_safe = false;
+                log_unsafe(current_state);
+                break;
+            }
+        }
 
-        // for (std::function<bool(State*)> safe_oracle : safe_oracles) {
-        //     if (safe_oracle(current_state)) {
-        //         log_safe(current_state);
-        //         continue;
-        //     }
-        // }
+        for (std::function<bool(State*)> safe_oracle : safe_oracles) {
+            if (safe_oracle(current_state)) {
+                log_safe(current_state);
+                continue;
+            }
+        }
 
         // apply all three transitions
         std::vector<State*> request_states;

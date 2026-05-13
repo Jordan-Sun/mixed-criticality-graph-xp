@@ -263,40 +263,28 @@ def campaign_schedulability(timeout_seconds: int):
     }
 
     use_cases = [
+        {
+            **base_config,
+            "use_case": "EDF-VD (P)",
+            "scheduler": "edfvd",
+            "search_algorithms": ["pbfs"],
+        },
         # {
         #     **base_config,
         #     "use_case": "EDF-VD (AC)",
         #     "scheduler": "edfvd",
         #     "search_algorithms": ["acbfs"],
         # },
-        {
-            **base_config,
-            "use_case": "EDF-VD (DFS)",
-            "scheduler": "edfvd",
-            "search_algorithms": ["dfs"],
-        },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PAC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["pacbfs"],
+        # },
         # {
         #     **base_config,
         #     "use_case": "EDF-VD (PDFS)",
         #     "scheduler": "edfvd",
-        #     "search_algorithms": ["pdfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "LWLF (AC)",
-        #     "scheduler": "lwlf",
-        #     "search_algorithms": ["acbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "LWLF (DFS)",
-        #     "scheduler": "lwlf",
-        #     "search_algorithms": ["dfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "LWLF (PDFS)",
-        #     "scheduler": "lwlf",
         #     "search_algorithms": ["pdfs"],
         # },
     ]
