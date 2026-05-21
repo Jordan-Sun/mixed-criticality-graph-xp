@@ -23,6 +23,7 @@ void Job::execute(bool run) {
 
 void Job::terminate() { rct = 0; }
 
+// release the job under criticality crit
 void Job::request(int crit) {
     rct = C[crit - 1];
     nat = T;
