@@ -263,21 +263,21 @@ def campaign_schedulability(timeout_seconds: int):
     }
 
     use_cases = [
-        {
-            **base_config,
-            "use_case": "EDF-VD (P)",
-            "scheduler": "edfvd",
-            "search_algorithms": ["pbfs"],
-        },
         # {
         #     **base_config,
-        #     "use_case": "EDF-VD (AC)",
+        #     "use_case": "EDF-VD (PBFS)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["pbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (ACBFS)",
         #     "scheduler": "edfvd",
         #     "search_algorithms": ["acbfs"],
         # },
         # {
         #     **base_config,
-        #     "use_case": "EDF-VD (PAC)",
+        #     "use_case": "EDF-VD (PACBFS)",
         #     "scheduler": "edfvd",
         #     "search_algorithms": ["pacbfs"],
         # },
@@ -287,6 +287,30 @@ def campaign_schedulability(timeout_seconds: int):
         #     "scheduler": "edfvd",
         #     "search_algorithms": ["pdfs"],
         # },
+        {
+            **base_config,
+            "use_case": "LWLF (PBFS)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["pbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (ACBFS)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["acbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (PACBFS)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["pacbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (PDFS)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["pdfs"],
+        },
     ]
     variables = [
         use_case | other_variables
@@ -330,12 +354,12 @@ def campaign_chained(timeout_seconds: int):
     }
 
     use_cases = [
-        {
-            **base_config,
-            "use_case": "EDF-VD (AC)",
-            "scheduler": "edfvd",
-            "search_algorithms": ["none", "none", "acbfs"],
-        },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["none", "none", "acbfs"],
+        # },
         # {
         #     **base_config,
         #     "use_case": "EDF-VD (PAC-AC)",
@@ -344,28 +368,40 @@ def campaign_chained(timeout_seconds: int):
         # },
         # {
         #     **base_config,
+        #     "use_case": "EDF-VD (P-AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["none", "pbfs", "acbfs"],
+        # },
+        # {
+        #     **base_config,
         #     "use_case": "EDF-VD (PAC-P-AC)",
         #     "scheduler": "edfvd",
         #     "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
         # },
-        # {
-        #     **base_config,
-        #     "use_case": "LWLF (AC)",
-        #     "scheduler": "lwlf",
-        #     "search_algorithms": ["none", "none", "acbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "LWLF (PAC-AC)",
-        #     "scheduler": "lwlf",
-        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "LWLF (PAC-P-AC)",
-        #     "scheduler": "lwlf",
-        #     "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
-        # },
+        {
+            **base_config,
+            "use_case": "LWLF (AC)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["none", "none", "acbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (PAC-AC)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["none", "pacbfs", "acbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (P-AC)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["none", "pbfs", "acbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (PAC-P-AC)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
+        },
     ]
     variables = [
         use_case | other_variables
@@ -683,7 +719,8 @@ def main() -> None:
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
     # parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=8) # done
-    parallel_runner(campaign=campaign_schedulability(timeout_seconds=min15), nb_cpus=32)
+    # parallel_runner(campaign=campaign_schedulability(timeout_seconds=min15), nb_cpus=32)
+    parallel_runner(campaign=campaign_chained(timeout_seconds=min15), nb_cpus=16)
     # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)
     # parallel_runner(campaign=campaign_compression_table(timeout_seconds=min15), nb_cpus=128)
 

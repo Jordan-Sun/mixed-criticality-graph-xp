@@ -1,6 +1,6 @@
 #include "Graph.h"
+#include "DFSHelper.cpp"
 #include "util.cpp"
-#include <stack>
 
 Graph::Graph() = default;
 
@@ -386,27 +386,18 @@ void Graph::_acbfs(Result& result, bool periodic_only) {
     for (State* unexplored_state : leaf_states) delete unexplored_state;
 }
 
-typedef struct {
-    int from_depth;
-    uint64_t from_hash;
-    State* to;
-} DFSEdge;
-
 void Graph::_dfs(Result& result, bool periodic_only) {
     initialize_search(periodic_only ? SearchAlgorithm::PDFS : SearchAlgorithm::DFS);
 
     // Records from and current state so the graph can be drawn.
-    std::stack<DFSEdge> unexplored_states;
+    UniqueStack unexplored_states;
     unexplored_states.push(DFSEdge{0, 0, new State(*initial_state)});
     std::vector<State*> neighbors;
 
-    // std::unordered_set<uint64_t> visited_hashes;
     std::unordered_map<uint64_t, State*> visited_hash_states;
 
     while (!unexplored_states.empty()) {
-
-        auto[from_depth, from_hash, current_state] = unexplored_states.top();
-        unexplored_states.pop();
+        auto [from_depth, from_hash, current_state] = unexplored_states.pop();
         from_depth++;
 
         uint64_t current_state_hash = current_state->get_hash();
@@ -467,14 +458,10 @@ void Graph::_dfs(Result& result, bool periodic_only) {
     finalize_search(result);
 
     // not empty if automaton is unsafe
-    while (!unexplored_states.empty()) {
-        auto[from_depth, from_hash, unexplored_state] = unexplored_states.top();
-        unexplored_states.pop();
-        delete unexplored_state;
-    }
     for (const auto& [visited_hash, visited_state] : visited_hash_states) {
         delete visited_state;
     }
+    // UniqueStack will clean up after itself
 }
 
 // GRAPHIZ FUNCTIONS
