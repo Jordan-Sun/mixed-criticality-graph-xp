@@ -73,9 +73,10 @@ def campaign_state_space(timeout_seconds: int):
     taskset_files = [
         taskset2filename(f, benchmark)
         for f in [
-            # "statespace-rtss-utilisation",  # we dropped this chart from the paper
+            "statespace-rtss-utilisation",  # we dropped this chart from the paper
             "statespace-rtss-period-max",
             "statespace-rtss-n-tasks",
+            # "harmonic"
         ]
     ]
 
@@ -97,13 +98,13 @@ def campaign_state_space(timeout_seconds: int):
         {
             **base_config,
             "use_case": "ACBFS, no oracle",
-            "use_idlesim": True,
+            "search_algorithms": ["acbfs"],
             "unsafe_oracles": [],
         },
         # { # as the utilisation based chart was dropped, HI over demand is useless because U = 50% which is always schedulable
         #     **base_config,
         #     "use_case": "ACBFS, oracles",
-        #     "use_idlesim": True,
+        #     "search_algorithms": ["acbfs"],
         #     "unsafe_oracles": ["hi-over-demand"],
         # },
     ]
@@ -153,13 +154,12 @@ def campaign_state_space_period(timeout_seconds: int):
         "safe_oracles": [],
         "unsafe_oracles": [],
         "scheduler": "edfvd",
-        "periodic_tweak": True,
     }
 
     use_cases = [
         {
             "use_case": "BFS, no oracle, periodic",
-            "use_idlesim": False,
+            "search_algorithms": ["bfs"],
         },
     ]
     variables = [
@@ -213,12 +213,12 @@ def campaign_state_space_bfs(timeout_seconds: int):
         {
             **base_config,
             "use_case": "BFS, no oracle",
-            "use_idlesim": False,
+            "search_algorithms": ["bfs"],
         },
         {
             **base_config,
             "use_case": "ACBFS, no oracle",
-            "use_idlesim": True,
+            "search_algorithms": ["acbfs"],
         },
     ]
     variables = [
@@ -242,7 +242,6 @@ def campaign_state_space_bfs(timeout_seconds: int):
 
     return campaign01
 
-
 def campaign_schedulability(timeout_seconds: int):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
 
@@ -255,24 +254,62 @@ def campaign_schedulability(timeout_seconds: int):
         }
         for tf in taskset_files
         for tp in range(nb_systems(tasksystems_path=tf))
+        # for tp in range(10) # for testing
     ]
 
     base_config = {
-        "use_idlesim": True,
         "safe_oracles": [],
         "unsafe_oracles": ["hi-over-demand"],
     }
 
     use_cases = [
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PBFS)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["pbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (ACBFS)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PACBFS)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["pacbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PDFS)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["pdfs"],
+        # },
         {
             **base_config,
-            "use_case": "EDF-VD (exact)",
-            "scheduler": "edfvd",
+            "use_case": "LWLF (PBFS)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["pbfs"],
         },
         {
             **base_config,
-            "use_case": "LWLF (exact)",
+            "use_case": "LWLF (ACBFS)",
             "scheduler": "lwlf",
+            "search_algorithms": ["acbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (PACBFS)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["pacbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (PDFS)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["pdfs"],
         },
     ]
     variables = [
@@ -296,6 +333,96 @@ def campaign_schedulability(timeout_seconds: int):
 
     return campaign01
 
+def campaign_chained(timeout_seconds: int):
+    benchmark = MCSBench(timeout_seconds=timeout_seconds)
+
+    taskset_files = [taskset2filename("scheduling-rtss", benchmark)]
+
+    varying_variables = [
+        {
+            "taskset_file": tf,
+            "taskset_position": tp,
+        }
+        for tf in taskset_files
+        for tp in range(nb_systems(tasksystems_path=tf))
+        # for tp in range(10) # for testing
+    ]
+
+    base_config = {
+        "safe_oracles": [],
+        "unsafe_oracles": ["hi-over-demand"],
+    }
+
+    use_cases = [
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["none", "none", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PAC-AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (P-AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["none", "pbfs", "acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (PAC-P-AC)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
+        # },
+        {
+            **base_config,
+            "use_case": "LWLF (AC)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["none", "none", "acbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (PAC-AC)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["none", "pacbfs", "acbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (P-AC)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["none", "pbfs", "acbfs"],
+        },
+        {
+            **base_config,
+            "use_case": "LWLF (PAC-P-AC)",
+            "scheduler": "lwlf",
+            "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
+        },
+    ]
+    variables = [
+        use_case | other_variables
+        for use_case in use_cases
+        for other_variables in varying_variables
+    ]
+
+    campaign01 = CampaignIterateVariables(
+        name="mcs_schedulability",
+        benchmark=MCSBench(timeout_seconds=timeout_seconds),
+        nb_runs=1,
+        variables=variables,
+        constants={},
+        debug=False,
+        gdb=False,
+        enable_data_dir=True,
+        continuing=False,
+        benchmark_duration_seconds=None,
+    )
+
+    return campaign01
 
 def campaign_oracles(timeout_seconds: int):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
@@ -312,7 +439,7 @@ def campaign_oracles(timeout_seconds: int):
 
     base_config = {
         "scheduler": "edfvd",
-        "use_idlesim": True,
+        "search_algorithms": ["acbfs"],
     }
 
     use_cases = [
@@ -398,28 +525,28 @@ def campaign_compression_table(timeout_seconds: int):
             "use_case": "BFS",
             "safe_oracles": [],
             "unsafe_oracles": [],
-            "use_idlesim": False,
+            "search_algorithms": ["bfs"],
         },
         {
             **base_config,
             "use_case": "ACBFS",
             "safe_oracles": [],
             "unsafe_oracles": [],
-            "use_idlesim": True,
+            "search_algorithms": ["acbfs"],
         },
         {
             **base_config,
             "use_case": "BFS, HI over demand",
             "safe_oracles": [],
             "unsafe_oracles": ["hi-over-demand"],
-            "use_idlesim": False,
+            "search_algorithms": ["bfs"],
         },
         {
             **base_config,
             "use_case": "ACBFS, HI over demand",
             "safe_oracles": [],
             "unsafe_oracles": ["hi-over-demand"],
-            "use_idlesim": True,
+            "search_algorithms": ["acbfs"],
         },
     ]
     variables = [
@@ -590,11 +717,12 @@ def main() -> None:
     min30 = 60*30
     min15 = 60*15
 
-    parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
-    parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=16) # done
-    parallel_runner(campaign=campaign_schedulability(timeout_seconds=min15), nb_cpus=64)
-    parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)
-    parallel_runner(campaign=campaign_compression_table(timeout_seconds=min15), nb_cpus=128)
+    # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
+    # parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=8) # done
+    # parallel_runner(campaign=campaign_schedulability(timeout_seconds=min15), nb_cpus=32)
+    parallel_runner(campaign=campaign_chained(timeout_seconds=min15), nb_cpus=16)
+    # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)
+    # parallel_runner(campaign=campaign_compression_table(timeout_seconds=min15), nb_cpus=128)
 
 
 

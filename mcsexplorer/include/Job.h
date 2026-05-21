@@ -53,8 +53,11 @@ class Job {
     bool is_deadline_miss() const { return rct > 0 and get_ttd() <= 0; };
     bool is_discarded(int crit) const { return X < crit; };
 
+    // execute the job for a tick with run indicating whether the job was chosen to run or not
     void execute(bool run);
+    // terminate the job
     void terminate();
+    // release the job under criticality crit
     void request(int crit);
     void critic(int current_crit, int next_crit, bool is_triggering);
 

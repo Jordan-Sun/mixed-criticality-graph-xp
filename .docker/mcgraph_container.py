@@ -21,9 +21,9 @@ def get_mcgraph_builder(image_name: str) -> UbuntuDockerBuilder:
         user_name=user_name,
         lib_dir=lib_dir,
         packages=[
-            "python3.11",
-            "python3.11-dev",
-            "python3.11-venv",
+            "python3",
+            "python3-dev",
+            "python3-venv",
         ],
     )
     docker_builder.space()

@@ -18,6 +18,7 @@ add_compile_options("${WFLAGS}")
 
 set(
     CPP_SOURCES
+        src/DFSHelper.cpp
         src/State.cpp
         src/Job.cpp
         src/Graph.cpp

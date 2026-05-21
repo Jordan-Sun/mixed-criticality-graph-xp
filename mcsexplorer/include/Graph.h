@@ -18,36 +18,36 @@ class Graph {
 
     Graph(State* initial_state_, std::function<int(State*)> schedule_, std::string graph_output_path_ = "",
           int verbose_ = 0, std::vector<std::function<bool(State*)>> safe_oracles_ = {},
-          std::vector<std::function<bool(State*)>> unsafe_oracles_ = {}, bool periodic_tweak_ = false)
+          std::vector<std::function<bool(State*)>> unsafe_oracles_ = {})
         : initial_state(initial_state_),
           graph_output_path(graph_output_path_),
           plot_graph(graph_output_path_ != ""),
           verbose(verbose_),
           schedule(schedule_),
           safe_oracles(safe_oracles_),
-          unsafe_oracles(unsafe_oracles_),
-          periodic_tweak(periodic_tweak_){};
+          unsafe_oracles(unsafe_oracles_){};
 
     bool is_fail(std::vector<State*> const& states);
     void run_tansition(State* state, int to_run);
     std::vector<State*> completion_transition(State* state, int to_run);
     std::vector<State*> request_transition(State* state);
+    std::vector<State*> request_periodic_transition(State* state);
 
     bool has_unsafe(std::vector<State*> const& states);
     void handle_safe(std::vector<State*>& states);
 
-    std::vector<State*> handle_request_transition(State* state, bool is_last_leaf);
+    std::vector<State*> handle_request_transition(State* state, bool is_last_leaf, bool periodic_only = false);
     void handle_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
     std::vector<State*> handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
                                                      bool is_last_leaf);
 
-    std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states);
+    std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only = false);
 
-    void initialize_search(bool use_idle_antichain_current);
-    int64_t* finalize_search();
+    void initialize_search(SearchAlgorithm algorithm);
+    void finalize_search(Result& result);
 
-    int64_t* bfs();
-    int64_t* acbfs();
+    // Searches using algorithms in order, returning early upon unsafe states and returning the results of all algorithms run until then.
+    std::vector<Result> search(std::vector<SearchAlgorithm> algorithms = {});
 
     void set_safe_oracle(std::function<bool(State*)> safe_oracle) { safe_oracles = {safe_oracle}; }
     void set_unsafe_oracle(std::function<bool(State*)> unsafe_oracle) { unsafe_oracles = {unsafe_oracle}; }
@@ -64,6 +64,7 @@ class Graph {
     void log_start_search();
     void log_end_search();
     void log_step(int leaf_states_size);
+    void log_fail(State* fail_state);
     void log_unsafe(State* unsafe_state);
     void log_safe(State* safe_state);
     void log_start(State* state, bool is_last_leaf);
@@ -85,14 +86,26 @@ class Graph {
     std::vector<std::function<bool(State*)>> safe_oracles;
     std::vector<std::function<bool(State*)>> unsafe_oracles;
 
-    bool periodic_tweak;
-
     bool automaton_is_safe;
-    bool use_idle_antichain;
+    SearchAlgorithm search_algorithm;
     int automaton_depth;
     u_int64_t visited_count;
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
     std::chrono::nanoseconds duration;
+
+    // Dummy placeholder
+    void _dummy(Result& result) {
+      result.algorithm = SearchAlgorithm::NONE;
+      result.is_safe = true;
+      result.depth = 0;
+      result.visited_count = 0;
+      result.duration_ns = 0;
+    }
+
+    // Algorithms
+    void _bfs(Result& result, bool periodic_only = false);
+    void _acbfs(Result& result, bool periodic_only = false);
+    void _dfs(Result& result, bool periodic_only = false);
 };
 
 #endif

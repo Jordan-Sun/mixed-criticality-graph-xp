@@ -1,6 +1,7 @@
-from random import random, randrange, uniform
+from random import random, randrange, uniform, choices
 
-from drs import drs
+# from drs import drs
+from convolutionalfixedsum import cfsn
 from scipy.stats import loguniform
 
 from Task import Task
@@ -9,11 +10,14 @@ from TaskSet import TaskSet
 U_MIN = 0
 U_MAX = 1
 
+P_pool = [10, 20, 50, 100]  # Weighted pool of periods for tasks
+P_weights = [25, 25, 3, 20]  # Weights for the periods in the pool
 
 def generate_task_uniform(probability_of_HI, wcet_HI_ratio, max_wcet_LO, min_period, max_period):
     offset = 0
 
-    period = round(loguniform.rvs(min_period, max_period))
+    # period = round(loguniform.rvs(min_period, max_period))
+    period = choices(P_pool, weights=P_weights, k=1)[0]
 
     wcet = [randrange(1, min(max_wcet_LO, period) + 1)] * 2
 
@@ -96,53 +100,60 @@ def generate_task_set_with_utilisation(
             continue
 
         # draw periods before hand
-        periods = [loguniform.rvs(min_period, max_period) for i in range(n_tasks)]
-        periods = list(map(round, periods))
+        # periods = [loguniform.rvs(min_period, max_period) for i in range(n_tasks)]
+        # periods = list(map(round, periods))
+        # draw periods from weighted pool instead
+        periods = choices(P_pool, weights=P_weights, k=n_tasks)
 
         # tasks must have a min wcet of 1, this inferieng what is the min utilisation based on the period
         u_min_in_LO = [1 / p for p in periods]
 
-        # for DRS, lower bounds must sum to less than max utilisation
+        # for CFSN, lower bounds must sum to less than max utilisation
         if sum(u_min_in_LO) > u_LO:
             if verbose:
                 print(f"sum(u_min_in_LO) > u_LO: {sum(u_min_in_LO)} > {u_LO}")
             continue
 
-        # using DRS to draw task level utilisation in LO
+        # using CFSN to draw task level utilisation in LO
         try:
-            u_LO_tasks = drs(n_tasks, u_LO, [U_MAX] * n_tasks, u_min_in_LO)
+            u_LO_tasks = cfsn(n_tasks, u_LO, lower_constraints=u_min_in_LO)
         except ZeroDivisionError:
             if verbose:
-                print("ZeroDivisionError in DRS utilisation in LO")
+                print("ZeroDivisionError in CFSN utilisation in LO")
             continue
 
-        # defining lower and upper bounds for all tasks in HI
-        u_min_in_HI = []
-        u_max_in_HI = []
-        for i in range(n_tasks):
-            if i in tasks_HI:
-                # minimum utilisation for HI tasks in HI is their utilisation in LO
-                u_min_in_HI.append(u_LO_tasks[i])
-                u_max_in_HI.append(U_MAX)
-            else:
-                # if task is LO, utilisation in HI must be 0
-                # thus set DRS range to [0,0] hence only option is 0
-                u_min_in_HI.append(0)
-                u_max_in_HI.append(0)
+        # defining lower and upper bounds only for HI tasks in HI
+        # another workaround for a bug in CFSN that it would fail when lower bound is equal to the upper bound.
+        # generate only the HI entries, then place them back in task order after generation.
+        u_min_in_HI = [u_LO_tasks[i] for i in tasks_HI]
+        u_max_in_HI = [U_MAX] * n_HI
 
-        # for DRS, lower bounds must sum to less than max utilisation
+        # for CFSN, lower bounds must sum to less than max utilisation
         if sum(u_min_in_HI) > u_HI:
             if verbose:
                 print(f"sum(u_min_in_HI) > u_HI: {sum(u_min_in_HI)} > {u_HI}")
             continue
 
-        # using DRS to draw task level utilisation of HI tasks in HI
-        try:
-            u_HI_tasks = drs(n_tasks, u_HI, u_max_in_HI, u_min_in_HI)
-        except ZeroDivisionError:
-            if verbose:
-                print("ZeroDivisionError in DRS utilisation in HI")
-            continue
+        # using CFSN to draw task level utilisation of HI tasks in HI
+        # this is just a workaround for a bug in CFSN when N=1 for HI criticality tasks where it will fail.
+        if n_HI == 1:
+            u_HI_tasks_HI = [u_HI]
+        else:
+            try:
+                u_HI_tasks_HI = cfsn(n_HI, total=u_HI, upper_constraints=u_max_in_HI, lower_constraints=u_min_in_HI)
+            except ZeroDivisionError:
+                if verbose:
+                    print("ZeroDivisionError in CFSN utilisation in HI")
+                continue
+            except Exception as e:
+                print(f"Exception in CFSN utilisation in HI: {e}")
+                print(f"n_tasks={n_tasks}, u_HI={u_HI}, u_max_in_HI={u_max_in_HI}, u_min_in_HI={u_min_in_HI}")
+                exit(1)
+
+        # reconstruct full list to resume normal execution
+        u_HI_tasks = [0] * n_tasks
+        for task_idx, u_hi_task in zip(tasks_HI, u_HI_tasks_HI):
+            u_HI_tasks[task_idx] = u_hi_task
 
         task_set = TaskSet()
 

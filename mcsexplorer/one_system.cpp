@@ -11,15 +11,20 @@
 #include <string>
 #include <vector>
 
+typedef enum {
+    SUCCESS = 0,
+    BAD_EXACT_ALGORITHM = 1,
+} ErrorCode;
+
 struct {
     std::string inputfile_path;
+    std::string graph_output_path;
     size_t taskset_position;
-    bool use_idlesim = false;
     std::string scheduler = "edfvd";
+    std::vector<std::string> search_algorithms;
     std::vector<std::string> safe_oracles;
     std::vector<std::string> unsafe_oracles;
     int log_level = -1;
-    bool periodic_tweak = false;
 } CONFIG;
 
 State* read_task_set(std::string const& input_path, int offset = 0) {
@@ -61,6 +66,16 @@ State* read_task_set(std::string const& input_path, int offset = 0) {
     exit(1);
 }
 
+int usage(int argc, char** argv) {
+    std::string program_name = (argc > 0) ? argv[0] : "mcsexplorer";
+    std::cerr << "Usage: " << program_name
+              << " --taskset-file <path> --taskset-position <position> [--scheduler <scheduler>] "
+                 "[--search-algorithms <algorithm1,algorithm2,...>] [--safe-oracles <oracle1,oracle2,...>] "
+                 "[--unsafe-oracles <oracle1,oracle2,...>] [--log-level <level>] [--graph-output <path>]"
+              << std::endl;
+    return 1;
+}
+
 void parse_args(int argc, char** argv) {
     int i = 1;
     while (i < argc) {
@@ -82,13 +97,20 @@ void parse_args(int argc, char** argv) {
             const size_t taskset_position = static_cast<size_t>(std::stoi(taskset_position_str));
             CONFIG.taskset_position = taskset_position;
             i++;
-        } else if ("--use-idlesim" == argument) {
-            i++;
-            CONFIG.use_idlesim = true;
         } else if ("--scheduler" == argument) {
             i++;
             const std::string scheduler = argv[i];
             CONFIG.scheduler = scheduler;
+            i++;
+        } else if ("--search-algorithms" == argument) {
+            i++;
+            const std::string search_algorithms = argv[i];
+
+            std::string token;
+            std::istringstream tokenStream(search_algorithms);
+            while (std::getline(tokenStream, token, ',')) {
+                CONFIG.search_algorithms.push_back(token);
+            }
             i++;
         } else if ("--safe-oracles" == argument) {
             i++;
@@ -116,9 +138,10 @@ void parse_args(int argc, char** argv) {
             const int log_level = static_cast<int>(std::stoi(log_level_str));
             CONFIG.log_level = log_level;
             i++;
-        } else if ("--periodic-tweak" == argument) {
+        } else if ("--graph-output" == argument) {
             i++;
-            CONFIG.periodic_tweak = true;
+            CONFIG.graph_output_path = argv[i];
+            i++;
         } else {
             i++;
             std::cerr << "Unknown argument: " << argument << std::endl;
@@ -127,11 +150,19 @@ void parse_args(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
+    if (argc <= 1) {
+        return usage(argc, argv);
+    }
+
     parse_args(argc, argv);
     std::cout << "Arguments: " << std::endl;
     std::cout << "  input file: " << CONFIG.inputfile_path << std::endl;
     std::cout << "  taskset number: " << CONFIG.taskset_position << std::endl;
-    std::cout << "  use idlesim: " << (CONFIG.use_idlesim ? "true" : "false") << std::endl;
+    std::cout << "  search-algorithms: " << (CONFIG.search_algorithms.empty() ? "None" : "");
+    for (std::string search_algorithm : CONFIG.search_algorithms) {
+        std::cout << search_algorithm << " ";
+    }
+    std::cout << std::endl;
     std::cout << "  scheduler: " << CONFIG.scheduler << std::endl;
     std::cout << "  safe-oracles: " << (CONFIG.safe_oracles.empty() ? "None" : "");
     for (auto oracle : CONFIG.safe_oracles) {
@@ -144,7 +175,6 @@ int main(int argc, char** argv) {
     }
     std::cout << std::endl;
     std::cout << "  log level: " << CONFIG.log_level << std::endl;
-    std::cout << "  periodic tweak: " << (CONFIG.periodic_tweak ? "true" : "false") << std::endl;
 
     State* start_state = read_task_set(CONFIG.inputfile_path, CONFIG.taskset_position);
 
@@ -159,42 +189,76 @@ int main(int argc, char** argv) {
 
     std::vector<std::function<bool(State*)>> safe_oracles, unsafe_oracles;
 
+    std::string all_safe_oracles_str = "";
     for (std::string safe_oracle_str : CONFIG.safe_oracles) {
         if ("hi-idle-point" == safe_oracle_str) {
             safe_oracles.push_back(&SafeOracle::all_idle_hi);
+            all_safe_oracles_str += "hi-idle-point+";
         } else {
             std::cerr << "Bad safe oracle: " << safe_oracle_str << std::endl;
         }
     }
+    if (all_safe_oracles_str.empty()) {
+        all_safe_oracles_str = "None";
+    } else {
+        all_safe_oracles_str.pop_back(); // Remove the trailing "+"
+    }
 
+    std::string all_unsafe_oracles_str = "";
     for (std::string unsafe_oracle_str : CONFIG.unsafe_oracles) {
         if ("negative-laxity" == unsafe_oracle_str) {
             unsafe_oracles.push_back(&UnsafeOracle::laxity);
+            all_unsafe_oracles_str += "negative-laxity+";
         } else if ("negative-worst-laxity" == unsafe_oracle_str) {
             unsafe_oracles.push_back(&UnsafeOracle::worst_laxity);
+            all_unsafe_oracles_str += "negative-worst-laxity+";
         } else if ("over-demand" == unsafe_oracle_str) {
             unsafe_oracles.push_back(&UnsafeOracle::over_demand);
+            all_unsafe_oracles_str += "over-demand+";
         } else if ("hi-over-demand" == unsafe_oracle_str) {
             unsafe_oracles.push_back(&UnsafeOracle::hi_over_demand);
+            all_unsafe_oracles_str += "hi-over-demand+";
         } else {
             std::cerr << "Bad unsafe oracle: " << unsafe_oracle_str << std::endl;
         }
     }
-
-    Graph graph(start_state, scheduler, "", CONFIG.log_level, safe_oracles, unsafe_oracles, CONFIG.periodic_tweak);
-
-    int64_t* result;
-    if (CONFIG.use_idlesim) {
-        result = graph.acbfs();
+    if (all_unsafe_oracles_str.empty()) {
+        all_unsafe_oracles_str = "None";
     } else {
-        result = graph.bfs();
+        all_unsafe_oracles_str.pop_back(); // Remove the trailing "+"
     }
 
-    std::cout << "Results:";
-    std::cout << "is_safe=" << (result[0] == 1 ? "True" : "False") << ";";
-    std::cout << "automaton_depth=" << result[1] << ";";
-    std::cout << "visited_count=" << result[2] << ";";
-    std::cout << "duration_ns=" << result[3];
+    Graph graph(start_state, scheduler, CONFIG.graph_output_path, CONFIG.log_level, safe_oracles, unsafe_oracles);
+
+    std::vector<SearchAlgorithm> algorithms;
+    for (const auto& algorithm_name : CONFIG.search_algorithms) {
+        algorithms.push_back(from_name(algorithm_name));
+    }
+
+    std::vector<Result> results = graph.search(algorithms);
+    std::cout << "Results: ";
+    u_int64_t duration_ns = 0;
+    for (size_t i = 0; i < results.size(); i++) {
+        const auto& result = results[i];
+        std::cout << "is_safe_" << i << "=" << (result.is_safe == 1 ? "True" : "False") << ";";
+        std::cout << "automaton_depth_" << i << "=" << result.depth << ";";
+        std::cout << "visited_count_" << i << "=" << result.visited_count << ";";
+        std::cout << "duration_ns_" << i << "=" << result.duration_ns;
+        duration_ns += result.duration_ns;
+        if (i < results.size() - 1) {
+            std::cout << ";";
+        }
+    }
+    // Fill in the remaining using the is_safe from the last stage
+    bool is_safe = results.back().is_safe;
+    for (size_t i = results.size(); i < CONFIG.search_algorithms.size(); i++) {
+        std::cout << ";is_safe_" << i << "=" << (is_safe == 1 ? "True" : "False") << ";";
+        std::cout << "automaton_depth_" << i << "=0;";
+        std::cout << "visited_count_" << i << "=0;";
+        std::cout << "duration_ns_" << i << "=0";
+    }
+    // Print the total duration and overall is_safe result
+    std::cout << ";is_safe=" << (is_safe == 1 ? "True" : "False") << ";duration_ns=" << duration_ns;
 
     return 0;
 }

@@ -327,4 +327,17 @@ generate-set-compression-table-rtss: $(VENV)
 	--sets_per_config 100 \
 	--seed 7
 
+generate-set-harmonic: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t utilisation \
+	-o $(OUTPUT_DIR)/$(DT)-harmonic.txt \
+	-c $(OUTPUT_DIR)/$(DT)-harmonic.csv \
+	--probability_of_HI 0.5 \
+	-u 30 \
+	-U 101 \
+	-us 10 \
+	-ss 20 \
+	-ta 5 \
+	--seed 0406
+
 generate-set-rtss-all: generate-set-statespace-rtss-n-tasks generate-set-statespace-rtss-period-max generate-set-statespace-rtss-utilisation generate-set-scheduling-rtss generate-set-oracles-rtss generate-set-compression-table-rtss
