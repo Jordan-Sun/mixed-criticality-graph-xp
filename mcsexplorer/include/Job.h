@@ -15,7 +15,8 @@ class Job {
    public:
     Job() = default;
 
-    Job(int T, int D, Criticality X, std::vector<int> const& C, int p = 0) : T(T), D(D), X(X), C(std::move(C)), p(p) {
+    Job(int T, int D, Criticality X, std::vector<int> const& C, int C_s, int p = 0)
+        : T(T), D(D), X(X), C_s(C_s), C(std::move(C)), p(p) {
         initialize();
     };
 
@@ -23,6 +24,7 @@ class Job {
         : T(other->T),
           D(other->D),
           X(other->X),
+          C_s(other->C_s),
           C(other->C),
           p(other->p),
           rct(other->rct),
@@ -35,6 +37,7 @@ class Job {
     int get_D() const { return D; };
     int get_X() const { return X; };
     // TODO we use L_i in the paper; maybe we change that to avoid confusion?
+    int get_C_s() const { return C_s; };
     std::vector<int> get_C() const { return C; };
     int get_C(Criticality criticality) const { return C[criticality - 1]; };
     int get_p() const { return p; };
@@ -44,9 +47,11 @@ class Job {
 
     int get_ttd() const { return nat - (T - D); };
     float get_ttvd(float discount_factor) const;
+    float get_ttsd(float discount_factor) const;
     int get_laxity() const { return get_ttd() - rct; };
     int get_worst_laxity(Criticality current_crit) const { return get_ttd() - rct - (C[1] - C[current_crit - 1]); };
 
+    bool is_unchecked() const { return rst > 0; };
     bool is_active() const { return rct > 0; };
     bool is_eligible(int crit) const { return rct == 0 and nat == 0 and X >= crit; };
     bool is_implicitly_completed(int crit) const { return rct == 0 and C[crit - 1] == C[X - 1]; };
@@ -79,12 +84,15 @@ class Job {
     int T;
     int D;
     Criticality X;
+    int C_s; // switching time for quarter-clairvoyant
     std::vector<int> C;
     int p;  // priority for FJP/FTP
 
+    int rst; // remaining switching time
     int rct;
     int nat;
 
+    float u_s = float(C_s) / float(T); // switching utilization
     std::vector<float> utilisation =
         std::vector<float>{compute_utilisation_at_level(1), compute_utilisation_at_level(2)};
 

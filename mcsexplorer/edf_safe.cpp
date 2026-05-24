@@ -5,9 +5,9 @@
 
 int main() {
     std::vector<Job*> jobs = {
-        new Job(11, 11, HI, {2, 3}),
-        new Job(12, 12, LO, {5, 5}),
-        new Job(3, 3, HI, {1, 2}),
+        new Job(11, 11, HI, {2, 3}, 2),
+        new Job(12, 12, LO, {5, 5}, 0),
+        new Job(3, 3, HI, {1, 2}, 1),
     };
 
     State state = State(jobs);
@@ -27,10 +27,6 @@ int main() {
     const bool edf_carryoverjobs = SafeOracle::edf_carryoverjobs(&state);
     std::cout << "edf_carryoverjobs oracle says " << (edf_carryoverjobs ? "unsafe" : "not unsafe") << " on that system."
               << std::endl;
-
-    for (Job* job : jobs) {
-        delete job;
-    }
 
     return 0;
 }

@@ -278,7 +278,20 @@ generate-set-scheduling-rtss: $(VENV)
 	--sets_per_config 1000 \
 	--seed 4
 
-
+generate-set-switching: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-switching.txt \
+	-c $(OUTPUT_DIR)/$(DT)-switching.csv \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--max_period_list 30 \
+	--n_tasks_list 5 \
+	--utilisation_start 50 \
+	--utilisation_stop 101 \
+	--utilisation_step 5 \
+	--sets_per_config 1000 \
+	--seed 4
 
 generate-set-oracles-rtss: $(VENV)
 	$(VENV_PYTHON) $(GENERATOR_EXP) \

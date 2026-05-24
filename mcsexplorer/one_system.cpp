@@ -38,7 +38,7 @@ State* read_task_set(std::string const& input_path, int offset = 0) {
 
     int t;  // n test cases
     int n;  // n tasks in test case
-    int T, D, X, c1, c2;
+    int T, D, X, c1, c2, cs;
     std::vector<Job*> jobs;
     int end;
 
@@ -50,9 +50,9 @@ State* read_task_set(std::string const& input_path, int offset = 0) {
         input_file >> n;
         for (int j = 0; j < n; j++) {
             input_file >> T >> D >> X;
-            input_file >> c1 >> c2;
+            input_file >> c1 >> c2 >> cs;
             if (i >= offset) {
-                Job* job = new Job(T, D, int2crit(X), std::vector<int>{c1, c2});
+                Job* job = new Job(T, D, int2crit(X), std::vector<int>{c1, c2}, cs);
                 jobs.push_back(job);
             }
         }

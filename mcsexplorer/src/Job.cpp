@@ -1,8 +1,9 @@
 #include "Job.h"
 
 void Job::initialize() {
-    nat = 0;
+    rst = 0;
     rct = 0;
+    nat = 0;
 }
 
 float Job::get_ttvd(float discount_factor) const {
@@ -10,8 +11,16 @@ float Job::get_ttvd(float discount_factor) const {
     return 1.0 * nat - (1.0 * T - D * discount_factor);
 };
 
+float Job::get_ttsd(float discount_factor) const {
+    if (X == LO) return (float)get_ttd();
+    float ttsd = get_ttvd(discount_factor);
+    if (rst == 0) return ttsd;
+    return ttsd * C_s / C[0];
+}
+
 void Job::execute(bool run) {
     if (run) {
+        rst = std::max(rst - 1, 0);
         rct--;
     }
     if (is_active()) {
@@ -21,10 +30,14 @@ void Job::execute(bool run) {
     }
 }
 
-void Job::terminate() { rct = 0; }
+void Job::terminate() { 
+    rst = 0;
+    rct = 0;
+}
 
 // release the job under criticality crit
 void Job::request(int crit) {
+    rst = C_s;
     rct = C[crit - 1];
     nat = T;
 }
@@ -46,20 +59,20 @@ void Job::repr() const { std::cout << str() << std::endl; }
 
 std::string Job::str() const {
     std::stringstream ss;
-    ss << "(" << rct << ", " << nat << ")";
+    ss << "(" << rst << ", " << rct << ", " << nat << ")";
     return ss.str();
 }
 
 std::string Job::str_task() const {
     std::stringstream ss;
-    ss << "T=" << T << ", D=" << D << ", X=" << X << ", C={" << C[0] << ", " << C[1] << "}";
+    ss << "T=" << T << ", D=" << D << ", X=" << X << ", C_s = " << C_s << ", C={" << C[0] << ", " << C[1] << "}";
     return ss.str();
 }
 
 std::string Job::dot_node() const {
     std::stringstream ss;
     // ss << "(" << rct << ", " << nat << ")";
-    ss << rct << "," << nat;
+    ss << rst << "," << rct << "," << nat;
     return ss.str();
 }
 

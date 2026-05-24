@@ -8,6 +8,12 @@
 
 #pragma once
 
+enum class Signal {
+    None,
+    CritUp,
+    Complete
+};
+
 class State {
    public:
     State() = default;
@@ -26,6 +32,7 @@ class State {
 
     void run_tansition(int to_run_index);
     void completion_transition(int ran_index, bool signals_completion);
+    // void signal_transition(int ran_index, Signal signal);
     void request_transition(std::vector<int> const& requestings);
 
     size_t n() const { return jobs.size(); }

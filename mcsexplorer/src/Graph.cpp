@@ -2,6 +2,8 @@
 #include "DFSHelper.cpp"
 #include "util.cpp"
 
+// Quick question: is the state space for allowing CritUp early equal to no early crit up?
+
 Graph::Graph() = default;
 
 Graph::~Graph() { delete initial_state; }

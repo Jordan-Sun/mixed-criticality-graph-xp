@@ -16,7 +16,7 @@ def get_task_set_definition(task_set):
     task_set_definition = f"{len(task_set)}\n"
     for task in task_set:
         task_set_definition += f"{int(task['T'])} {int(task['D'])} {int(task['X'])+1}\n"
-        task_set_definition += f"{int(task['C0'])} {int(task['C1'])}\n"
+        task_set_definition += f"{int(task['C0'])} {int(task['C1'])} {int(task['C_s'])}\n"
     return task_set_definition
 
 
@@ -65,6 +65,8 @@ def generate_per_n_tasks(
             task_set_info["U"] = task_set.get_average_utilisation()
             task_set_info["nbt"] = len(task_set)
             task_set_info["EDFVD_test"] = int(test_edfvd(task_set))
+            task_set_info["EDFVD_test_new"] = int(test_edfvd_new(task_set))
+            task_set_info["EDFVDSD_test"] = int(test_edfvdsd(task_set))
 
             task_sets_header = pd.concat([task_sets_header, task_set_info.to_frame().T], ignore_index=True)
 
@@ -223,6 +225,8 @@ def generate_modular(
                         task_set_info["Uv"] = task_set.get_average_utilisation()
                         task_set_info["nbt"] = len(task_set)
                         task_set_info["EDFVD_test"] = int(edfvd_suff)
+                        task_set_info["EDFVD_test_new"] = int(test_edfvd_new(task_set))
+                        task_set_info["EDFVDSD_test"] = int(test_edfvdsd(task_set))
                         task_set_info["probability_of_HI"] = probability_of_HI
                         task_set_info["min_period"] = min_period
                         task_set_info["max_period"] = max_period

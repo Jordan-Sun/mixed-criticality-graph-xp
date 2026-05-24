@@ -179,7 +179,7 @@ void read_task_sets(std::string const& input_path, std::string const& output_pat
 
     int t;  // n test cases
     int n;  // n tasks in test case
-    int T, D, X, c1, c2;
+    int T, D, X, c1, c2, cs;
     std::vector<Job*> jobs;
     int end;
 
@@ -195,9 +195,9 @@ void read_task_sets(std::string const& input_path, std::string const& output_pat
         input_file >> n;
         for (int j = 0; j < n; j++) {
             input_file >> T >> D >> X;
-            input_file >> c1 >> c2;
+            input_file >> c1 >> c2 >> cs;
             if (i >= offset) {
-                Job* job = new Job(T, D, int2crit(X), std::vector<int>{c1, c2});
+                Job* job = new Job(T, D, int2crit(X), std::vector<int>{c1, c2}, cs);
                 jobs.push_back(job);
             }
         }
@@ -234,9 +234,9 @@ void dev_main() {
 
     // State* s = new State(std::vector<Job*>{j, j2});
     State* s = new State(std::vector<Job*>{
-        new Job(11, 11, HI, std::vector<int>{2, 3}),
-        new Job(12, 12, LO, std::vector<int>{6, 6}),
-        new Job(3, 3, HI, std::vector<int>{1, 2}),
+        new Job(11, 11, HI, std::vector<int>{2, 3}, 2),
+        new Job(12, 12, LO, std::vector<int>{6, 6}, 0),
+        new Job(3, 3, HI, std::vector<int>{1, 2}, 1),
     });
 
     std::vector<std::function<bool(State*)>> safe_oracles, unsafe_oracles;
