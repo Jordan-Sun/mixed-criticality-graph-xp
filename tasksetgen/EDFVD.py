@@ -21,3 +21,23 @@ def test(task_set):
         )
 
     return utilisation_EDFVD <= 1
+
+def new_test(task_set):
+    utilisation_of_LO_at_LO = task_set.get_utilisation_of_level_at_level(0, 0)
+    utilisation_of_HI_at_LO = task_set.get_utilisation_of_level_at_level(1, 0)
+    utilisation_of_HI_at_HI = task_set.get_utilisation_of_level_at_level(1, 1)
+
+    utilisation_at_LO = utilisation_of_LO_at_LO + utilisation_of_HI_at_LO
+    utilisation_at_HI = utilisation_of_HI_at_HI
+
+    if utilisation_at_LO > 1:
+        return False
+    if utilisation_at_HI > 1:
+        return False
+    
+    if utilisation_of_LO_at_LO == 1:
+        return (utilisation_of_HI_at_LO == 0) and (utilisation_of_HI_at_HI == 0)
+    
+    x = utilisation_of_HI_at_LO / (1 - utilisation_of_LO_at_LO)
+
+    return x * utilisation_of_LO_at_LO + utilisation_of_HI_at_HI <= 1

@@ -57,11 +57,13 @@ def generate_random_task_set(n_tasks, probability_of_HI, wcet_HI_ratio, max_wcet
 
 
 def generate_task_set_with_utilisation(
-    n_tasks, target_average_utilisation, min_period, max_period, probability_of_HI, tolerance=0.005, verbose=False
+    n_tasks: int, target_average_utilisation: float, target_switching_factor: float, min_period: int, max_period: int, probability_of_HI: float, tolerance=0.005, verbose=False
 ):
     assert n_tasks > 1, "n_tasks must be at least 2"
     assert target_average_utilisation >= U_MIN, f"u_target must be greater than {U_MIN}"
     assert target_average_utilisation <= U_MAX, f"u_target must be less than {U_MAX}"
+    assert target_switching_factor >= 0, "target_switching_factor must be non-negative"
+    assert target_switching_factor <= 1, "target_switching_factor must be less than or equal to 1"
 
     while True:
         # select HI tasks
@@ -80,6 +82,12 @@ def generate_task_set_with_utilisation(
         # infer number of LO
         n_LO = n_tasks - n_HI
 
+        # draw periods before hand
+        periods = [loguniform.rvs(min_period, max_period) for _ in range(n_tasks)]
+        periods = list(map(round, periods))
+        # # draw periods from weighted pool instead
+        # periods = choices(P_pool, weights=P_weights, k=n_tasks)
+
         # compute possible range for utilisation in LO and HI based on target average utilisation
         range_to_u_max = U_MAX - target_average_utilisation
         range_to_u_min = target_average_utilisation
@@ -93,20 +101,48 @@ def generate_task_set_with_utilisation(
         # infer utilisation of LO to match target average utilisation
         u_LO = 2 * target_average_utilisation - u_HI
 
+        # tasks must have a min wcst of 1, this inferieng what is the min utilisation based on the period
+        u_min_for_S = [1 / periods[i] for i in tasks_HI]
+        if target_switching_factor > 0:
+            u_HI_LO_min = sum(u_min_for_S) / target_switching_factor
+        else:
+            u_HI_LO_min = 0
+
+        if u_HI_LO_min > min(u_HI, u_LO):
+            if verbose:
+                print(f"u_HI_LO_min > min(u_HI, u_LO): {u_HI_LO_min} > {min(u_HI, u_LO)}")
+            continue
+
+        # draw utilisation of U_HI_LO uniformly from possible range
+        u_HI_LO = uniform(u_HI_LO_min, min(u_HI, u_LO))
+        u_S = target_switching_factor * u_HI_LO
+
         u_avg = (u_HI + u_LO) / 2  # should always be == u_target
         if u_avg != target_average_utilisation:
             if verbose:
                 print(f"u_avg != u_target: {u_avg} != {target_average_utilisation}")
             continue
 
-        # draw periods before hand
-        # periods = [loguniform.rvs(min_period, max_period) for i in range(n_tasks)]
-        # periods = list(map(round, periods))
-        # draw periods from weighted pool instead
-        periods = choices(P_pool, weights=P_weights, k=n_tasks)
+        if n_HI == 1:
+            u_S_tasks_HI = [u_S]
+        else:
+            try:
+                u_S_tasks_HI = cfsn(n_HI, u_S, lower_constraints=u_min_for_S)
+            except ZeroDivisionError:
+                if verbose:
+                    print("ZeroDivisionError in CFSN utilisation in S")
+                continue 
+            except Exception as e:
+                print(f"Exception in CFSN utilisation in S: {e}")
+                print(f"n_tasks={n_tasks}, u_S={u_S}, u_min_for_S={u_min_for_S}")
+                exit(1)
 
-        # tasks must have a min wcet of 1, this inferieng what is the min utilisation based on the period
+        # reconstruct full list to resume normal execution
+        u_S_tasks = [0] * n_tasks
         u_min_in_LO = [1 / p for p in periods]
+        for task_idx, u_s_task in zip(tasks_HI, u_S_tasks_HI):
+            u_S_tasks[task_idx] = u_s_task
+            u_min_in_LO[task_idx] = u_s_task
 
         # for CFSN, lower bounds must sum to less than max utilisation
         if sum(u_min_in_LO) > u_LO:
@@ -157,7 +193,8 @@ def generate_task_set_with_utilisation(
 
         task_set = TaskSet()
 
-        for i, period, u_LO, u_HI in zip(range(n_tasks), periods, u_LO_tasks, u_HI_tasks):
+        for i, period, u_S, u_LO, u_HI in zip(range(n_tasks), periods, u_S_tasks, u_LO_tasks, u_HI_tasks):
+            wcst = max(1, round(period * u_S))
             wcet_LO = max(1, round(period * u_LO))
             wcet = [wcet_LO] * 2
             criticality_level = 0
@@ -167,7 +204,7 @@ def generate_task_set_with_utilisation(
 
             offset = 0
             deadline = period  # implicit deadline
-            task = Task(offset, period, deadline, criticality_level, wcet)
+            task = Task(offset, period, deadline, criticality_level, wcet, wcst)
 
             task_set.add_task(task)
 
@@ -193,17 +230,19 @@ def generate_task_set_with_utilisation(
             continue
 
         recap_str = f"""
-        Generating a set of {n_tasks} with target actual utilisation of {target_average_utilisation}.
+        Generating a set of {n_tasks} with target actual utilisation of {target_average_utilisation} and target switching factor of {target_switching_factor}.
 
         Randomly drawn number of HI tasks = {n_HI}
         Hence, number of LO tasks = {n_LO}
 
         HI tasks have ids: {tasks_HI}
 
+        Utilisation of Switching = {u_S}
         Utilisation of LO tasks = {u_LO}
         Utilisation of HI tasks = {u_HI}
         -> Average utilisation = {u_avg}
 
+        Loads of tasks for switching = {u_S_tasks}
         Loads of tasks in mode LO = {u_LO_tasks}
         Loads of tasks in mode HI = {u_HI_tasks}
         """

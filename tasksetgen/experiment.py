@@ -7,6 +7,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from EDFVD import test as test_edfvd
+from EDFVD import new_test as test_edfvd_new
+from EDFVDSD import test as test_edfvdsd
 from set_generator import generate_random_task_set, generate_task_set_with_utilisation
 
 
@@ -14,7 +16,7 @@ def get_task_set_definition(task_set):
     task_set_definition = f"{len(task_set)}\n"
     for task in task_set:
         task_set_definition += f"{int(task['T'])} {int(task['D'])} {int(task['X'])+1}\n"
-        task_set_definition += f"{int(task[0])} {int(task[1])}\n"
+        task_set_definition += f"{int(task['C0'])} {int(task['C1'])}\n"
     return task_set_definition
 
 
@@ -78,8 +80,8 @@ def generate_per_utilisation(
     task_sets_output=None,
     header_output=None,
     probability_of_HI=0.5,
-    min_period=5,
-    max_period=50,
+    min_period=None,
+    max_period=None,
     n_tasks=3,
     from_utilisation=89,
     to_utilisation=99,
@@ -90,6 +92,11 @@ def generate_per_utilisation(
         task_sets_output = f"outputs/{datetime.now().strftime('%Y%m%d%H%M%S')}_task_sets_scheduling.txt"
     if not header_output:
         header_output = f"outputs/{datetime.now().strftime('%Y%m%d%H%M%S')}_task_sets_scheduling.csv"
+
+    if not min_period:
+        min_period = 5
+    if not max_period:
+        max_period = 50
 
     task_set_id = 0
 
@@ -108,9 +115,10 @@ def generate_per_utilisation(
                 task_set = generate_task_set_with_utilisation(
                     n_tasks=n_tasks,
                     target_average_utilisation=u,
+                    target_switching_factor=1,  # not used in this generation method
+                    min_period=min_period,
                     max_period=max_period,
                     probability_of_HI=probability_of_HI,
-                    min_period=min_period,
                 )
                 task_set_hash = task_set.get_hash()
                 if task_set_hash not in generated_task_sets:
@@ -125,6 +133,8 @@ def generate_per_utilisation(
             task_set_info["Uv"] = task_set.get_average_utilisation()
             task_set_info["nbt"] = len(task_set)
             task_set_info["EDFVD_test"] = int(test_edfvd(task_set))
+            task_set_info["EDFVD_test_new"] = int(test_edfvd_new(task_set))
+            task_set_info["EDFVDSD_test"] = int(test_edfvdsd(task_set))
 
             task_sets_header = pd.concat([task_sets_header, task_set_info.to_frame().T], ignore_index=True)
 
@@ -190,6 +200,7 @@ def generate_modular(
                             task_set = generate_task_set_with_utilisation(
                                 n_tasks=n_tasks,
                                 target_average_utilisation=u,
+                                target_switching_factor=1,
                                 max_period=max_period,
                                 probability_of_HI=probability_of_HI,
                                 min_period=min_period,
