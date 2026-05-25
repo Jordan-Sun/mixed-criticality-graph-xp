@@ -82,6 +82,7 @@ def generate_per_utilisation(
     task_sets_output=None,
     header_output=None,
     probability_of_HI=0.5,
+    target_switching_factor=1,
     min_period=None,
     max_period=None,
     n_tasks=3,
@@ -117,7 +118,7 @@ def generate_per_utilisation(
                 task_set = generate_task_set_with_utilisation(
                     n_tasks=n_tasks,
                     target_average_utilisation=u,
-                    target_switching_factor=1,  # not used in this generation method
+                    target_switching_factor=target_switching_factor,
                     min_period=min_period,
                     max_period=max_period,
                     probability_of_HI=probability_of_HI,
@@ -153,6 +154,7 @@ def generate_modular(
     task_sets_output=None,
     header_output=None,
     probability_of_HI=0.5,
+    target_switching_factor=1,
     min_period=5,
     max_period_start=50,
     max_period_stop=61,
@@ -202,7 +204,7 @@ def generate_modular(
                             task_set = generate_task_set_with_utilisation(
                                 n_tasks=n_tasks,
                                 target_average_utilisation=u,
-                                target_switching_factor=1,
+                                target_switching_factor=target_switching_factor,
                                 max_period=max_period,
                                 probability_of_HI=probability_of_HI,
                                 min_period=min_period,
@@ -423,6 +425,12 @@ def read_args():
         type=bool,
         required=False,
     )
+    parser.add_argument(
+        "-tsf",
+        "--target_switching_factor",
+        type=float,
+        required=False,
+    )
 
     return parser.parse_args()
 
@@ -450,6 +458,7 @@ if __name__ == "__main__":
             args.task_sets_output,
             args.header_output,
             args.probability_of_HI,
+            args.target_switching_factor,
             args.minimum_period,
             args.maximum_period,
             args.task_amount,
@@ -463,6 +472,7 @@ if __name__ == "__main__":
             task_sets_output=args.task_sets_output,
             header_output=args.header_output,
             probability_of_HI=args.probability_of_HI,
+            target_switching_factor=args.target_switching_factor,
             min_period=args.minimum_period,
             max_period_start=args.max_period_start,
             max_period_stop=args.max_period_stop,

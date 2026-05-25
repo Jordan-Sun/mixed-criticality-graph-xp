@@ -262,6 +262,7 @@ def campaign_schedulability(timeout_seconds: int):
     base_config = {
         "safe_oracles": [],
         "unsafe_oracles": ["hi-over-demand"],
+        "quarter_clairvoyance": False,
     }
 
     use_cases = [
@@ -271,12 +272,26 @@ def campaign_schedulability(timeout_seconds: int):
         #     "scheduler": "edfvd",
         #     "search_algorithms": ["pbfs"],
         # },
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (ACBFS)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["acbfs"],
-        # },
+        {
+            **base_config,
+            "use_case": "EDF-VD (ACBFS, QC)",
+            "scheduler": "edfvd",
+            "search_algorithms": ["acbfs"],
+            "quarter_clairvoyance": True,
+        },
+        {
+            **base_config,
+            "use_case": "EDF-VDSD (ACBFS, QC)",
+            "scheduler": "edfvdsd",
+            "search_algorithms": ["acbfs"],
+            "quarter_clairvoyance": True,
+        },
+        {
+            **base_config,
+            "use_case": "EDF-VD (ACBFS)",
+            "scheduler": "edfvd",
+            "search_algorithms": ["acbfs"],
+        },
         {
             **base_config,
             "use_case": "EDF-VDSD (ACBFS)",

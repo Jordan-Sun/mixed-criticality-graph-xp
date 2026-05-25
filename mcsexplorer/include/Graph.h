@@ -29,7 +29,9 @@ class Graph {
 
     bool is_fail(std::vector<State*> const& states);
     void run_tansition(State* state, int to_run);
+    std::vector<State*> qc_run_transition(State* state, int to_run);
     std::vector<State*> completion_transition(State* state, int to_run);
+    std::vector<State*> qc_completion_transition(State* state, int to_run);
     std::vector<State*> request_transition(State* state);
     std::vector<State*> request_periodic_transition(State* state);
 
@@ -38,16 +40,17 @@ class Graph {
 
     std::vector<State*> handle_request_transition(State* state, bool is_last_leaf, bool periodic_only = false);
     void handle_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
+    std::vector<State*> handle_qc_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
     std::vector<State*> handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
-                                                     bool is_last_leaf);
+                                                     bool is_last_leaf, bool quarter_clairvoyance = false);
 
-    std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only = false);
+    std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only = false, bool quarter_clairvoyance = false);
 
     void initialize_search(SearchAlgorithm algorithm);
     void finalize_search(Result& result);
 
     // Searches using algorithms in order, returning early upon unsafe states and returning the results of all algorithms run until then.
-    std::vector<Result> search(std::vector<SearchAlgorithm> algorithms = {});
+    std::vector<Result> search(std::vector<SearchAlgorithm> algorithms = {}, bool quarter_clairvoyance = false);
 
     void set_safe_oracle(std::function<bool(State*)> safe_oracle) { safe_oracles = {safe_oracle}; }
     void set_unsafe_oracle(std::function<bool(State*)> unsafe_oracle) { unsafe_oracles = {unsafe_oracle}; }
@@ -103,8 +106,8 @@ class Graph {
     }
 
     // Algorithms
-    void _bfs(Result& result, bool periodic_only = false);
-    void _acbfs(Result& result, bool periodic_only = false);
+    void _bfs(Result& result, bool periodic_only = false, bool quarter_clairvoyance = false);
+    void _acbfs(Result& result, bool periodic_only = false, bool quarter_clairvoyance = false);
     void _dfs(Result& result, bool periodic_only = false);
 };
 

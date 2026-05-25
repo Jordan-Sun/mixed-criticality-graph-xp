@@ -69,6 +69,7 @@ class MCSBench(Benchmark):
             "search_algorithms",
             "log_level",
             "graph_output",
+            "quarter_clairvoyance",
         ]
 
     @staticmethod
@@ -126,6 +127,7 @@ class MCSBench(Benchmark):
         unsafe_oracles: List[str],
         log_level: int | None = None,
         graph_output: PathType | None = None,
+        quarter_clairvoyance: bool = False,
         **kwargs,
     ) -> str:
         environment = self._preload_env(
@@ -138,6 +140,7 @@ class MCSBench(Benchmark):
             unsafe_oracles=unsafe_oracles,
             log_level=log_level,
             graph_output=graph_output,
+            quarter_clairvoyance=quarter_clairvoyance,
             **kwargs,
         )
 
@@ -177,7 +180,8 @@ class MCSBench(Benchmark):
             cmd_options += ["--log-level", str(log_level)]
         if graph_output is not None:
             cmd_options += ["--graph-output", str(graph_output)]
-
+        if quarter_clairvoyance:
+            cmd_options += ["--quarter-clairvoyance"]
         mcs_build_dir = f"build-{self.platform.architecture}-docker"
         run_command = (
             self._docker_cmd_prefix

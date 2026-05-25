@@ -50,6 +50,7 @@ void Job::critic(int current_crit, int next_crit, bool is_triggering) {
         terminate();
     } else {
         if (is_active() or is_triggering) {
+            rst = 0;
             rct = rct + C[next_crit - 1] - C[current_crit - 1];
         }
     }

@@ -20,10 +20,32 @@ bool Graph::is_fail(std::vector<State*> const& states) {
 
 void Graph::run_tansition(State* state, int to_run) { state->run_tansition(to_run); }
 
+std::vector<State*> Graph::qc_run_transition(State* state, int to_run) {
+    State* state_signals = new State(*state);
+    state->qc_run_transition(to_run, false);
+    state_signals->qc_run_transition(to_run, true);
+    if (state->get_hash() != state_signals->get_hash()) {
+        return std::vector<State*>{state, state_signals};
+    }
+    delete state_signals;
+    return std::vector<State*>{state};
+}
+
 std::vector<State*> Graph::completion_transition(State* state, int to_run) {
     State* state_signals = new State(*state);
     state->completion_transition(to_run, false);
     state_signals->completion_transition(to_run, true);
+    if (state->get_hash() != state_signals->get_hash()) {
+        return std::vector<State*>{state, state_signals};
+    }
+    delete state_signals;
+    return std::vector<State*>{state};
+}
+
+std::vector<State*> Graph::qc_completion_transition(State* state, int to_run) {
+    State* state_signals = new State(*state);
+    state->qc_completion_transition(to_run, false);
+    state_signals->qc_completion_transition(to_run, true);
     if (state->get_hash() != state_signals->get_hash()) {
         return std::vector<State*>{state, state_signals};
     }
@@ -99,8 +121,26 @@ void Graph::handle_run_transition(std::vector<State*> const& states, std::vector
     }
 }
 
+std::vector<State*> Graph::handle_qc_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf) {
+    std::vector<State*> all_run_states = std::vector<State*>{};
+
+    for (size_t i = 0; i < states.size(); ++i) {
+        State* state = states[i];
+        int to_run = to_runs[i];
+
+        std::vector<State*> run_states = qc_run_transition(state, to_run);
+
+        for (State* new_state : run_states) {
+            all_run_states.push_back(new_state);
+            log_run(new_state, is_last_leaf);
+        }
+    }
+
+    return all_run_states;
+}
+
 std::vector<State*> Graph::handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
-                                                        bool is_last_leaf) {
+                                                        bool is_last_leaf, bool quarter_clairvoyance) {
     std::vector<State*> all_completion_states = std::vector<State*>{};
 
     for (size_t i = 0; i < states.size(); ++i) {
@@ -108,7 +148,12 @@ std::vector<State*> Graph::handle_completion_transition(std::vector<State*> cons
         int to_run = to_runs[i];
 
         if (to_run > -1) {
-            std::vector<State*> completion_states = completion_transition(state, to_run);
+            std::vector<State*> completion_states;
+            if (quarter_clairvoyance) {
+                completion_states = qc_completion_transition(state, to_run);
+            } else {
+                completion_states = completion_transition(state, to_run);
+            }
 
             for (State* new_state : completion_states) {
                 all_completion_states.push_back(new_state);
@@ -141,7 +186,7 @@ std::vector<State*> Graph::handle_request_transition(State* state, bool is_last_
     return request_states;
 }
 
-std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only) {
+std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only, bool quarter_clairvoyance) {
     std::vector<State*> new_states;
 
     for (size_t leaf_i = 0; leaf_i < leaf_states.size(); ++leaf_i) {
@@ -160,8 +205,15 @@ std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states,
             to_runs.push_back(schedule(request_state));
         }
 
-        handle_run_transition(request_states, to_runs, is_last_leaf);
-        std::vector<State*> neighbors = handle_completion_transition(request_states, to_runs, is_last_leaf);
+        std::vector<State*> run_states;
+        if (quarter_clairvoyance) {
+            run_states = handle_qc_run_transition(request_states, to_runs, is_last_leaf);
+        } else {
+            handle_run_transition(request_states, to_runs, is_last_leaf);
+            run_states = std::move(request_states);
+        }
+
+        std::vector<State*> neighbors = handle_completion_transition(request_states, to_runs, is_last_leaf, quarter_clairvoyance);
 
         connect_neighbors_graphviz(original_leaf_state, neighbors);
 
@@ -199,7 +251,7 @@ void Graph::finalize_search(Result& result) {
     result.duration_ns = duration.count();
 }
 
-std::vector<Result> Graph::search(std::vector<SearchAlgorithm> algorithms) {
+std::vector<Result> Graph::search(std::vector<SearchAlgorithm> algorithms, bool quarter_clairvoyance) {
     // First perform the pilot heuristic search if specified
     std::vector<Result> results;
 
@@ -209,14 +261,17 @@ std::vector<Result> Graph::search(std::vector<SearchAlgorithm> algorithms) {
         switch (algorithm) {
             case SearchAlgorithm::BFS:
             case SearchAlgorithm::PBFS:
-                _bfs(result, algorithm == SearchAlgorithm::PBFS);
+                _bfs(result, algorithm == SearchAlgorithm::PBFS, quarter_clairvoyance);
                 break;
             case SearchAlgorithm::ACBFS:
             case SearchAlgorithm::PACBFS:
-                _acbfs(result, algorithm == SearchAlgorithm::PACBFS);
+                _acbfs(result, algorithm == SearchAlgorithm::PACBFS, quarter_clairvoyance);
                 break;
             case SearchAlgorithm::DFS:
             case SearchAlgorithm::PDFS:
+                if (quarter_clairvoyance) {
+                    std::cerr << "Warning: quarter clairvoyance is not supported for DFS and will be ignored." << std::endl;
+                }
                 _dfs(result, algorithm == SearchAlgorithm::PDFS);
                 break;
             default:
@@ -233,7 +288,7 @@ std::vector<Result> Graph::search(std::vector<SearchAlgorithm> algorithms) {
     return results;
 }
 
-void Graph::_bfs(Result& result, bool periodic_only) {
+void Graph::_bfs(Result& result, bool periodic_only, bool quarter_clairvoyance) {
     initialize_search(periodic_only ? SearchAlgorithm::PBFS : SearchAlgorithm::BFS);
 
     std::vector<State*> leaf_states{new State(*initial_state)};
@@ -252,7 +307,7 @@ void Graph::_bfs(Result& result, bool periodic_only) {
 
         handle_safe(leaf_states);
 
-        neighbors = get_neighbors(leaf_states, periodic_only);
+        neighbors = get_neighbors(leaf_states, periodic_only, quarter_clairvoyance);
 
         automaton_depth++;
         leaf_states.clear();
@@ -293,7 +348,7 @@ bool pairwise_smaller_all(std::vector<int> a, std::vector<int> b) {
     return true;
 }
 
-void Graph::_acbfs(Result& result, bool periodic_only) {
+void Graph::_acbfs(Result& result, bool periodic_only, bool quarter_clairvoyance) {
     initialize_search(periodic_only ? SearchAlgorithm::PACBFS : SearchAlgorithm::ACBFS);
 
     std::vector<State*> leaf_states{new State(*initial_state)};
@@ -318,7 +373,7 @@ void Graph::_acbfs(Result& result, bool periodic_only) {
 
         handle_safe(leaf_states);
 
-        neighbors = get_neighbors(leaf_states, periodic_only);
+        neighbors = get_neighbors(leaf_states, periodic_only, quarter_clairvoyance);
 
         automaton_depth++;
         leaf_states.clear();

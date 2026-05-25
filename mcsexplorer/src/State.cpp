@@ -79,6 +79,19 @@ void State::run_tansition(int to_run_index = -1) {
     }
 }
 
+void State::qc_run_transition(int to_run_index, bool signals_mode_switch = false) {
+    const int n = jobs.size();
+    if (signals_mode_switch and crit == LO and to_run_index > -1 and jobs[to_run_index]->get_rst() > 0) {
+        for (int i = 0; i < n; ++i) {
+            jobs[i]->critic(crit, crit + 1, i == to_run_index);
+        }
+        crit = HI;
+    }
+    for (int i = 0; i < n; ++i) {
+        jobs[i]->execute(i == to_run_index);
+    }
+}
+
 void State::completion_transition(int ran_index = -1, bool signals_completion = false) {
     if (ran_index == -1) return;
 
@@ -90,6 +103,14 @@ void State::completion_transition(int ran_index = -1, bool signals_completion = 
             jobs[i]->critic(crit, crit + 1, i == ran_index);
         }
         crit = HI;
+    }
+}
+
+void State::qc_completion_transition(int ran_index, bool signals_completion = false) {
+    if (ran_index == -1) return;
+
+    if (jobs[ran_index]->is_implicitly_completed(crit) or signals_completion) {
+        jobs[ran_index]->terminate();
     }
 }
 

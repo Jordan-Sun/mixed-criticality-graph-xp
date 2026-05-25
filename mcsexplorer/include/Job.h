@@ -42,6 +42,7 @@ class Job {
     int get_C(Criticality criticality) const { return C[criticality - 1]; };
     int get_p() const { return p; };
 
+    int get_rst() const { return rst; };
     int get_rct() const { return rct; };
     int get_nat() const { return nat; };
 

@@ -24,6 +24,7 @@ struct {
     std::vector<std::string> search_algorithms;
     std::vector<std::string> safe_oracles;
     std::vector<std::string> unsafe_oracles;
+    bool quarter_clairvoyance = false;
     int log_level = -1;
 } CONFIG;
 
@@ -132,6 +133,9 @@ void parse_args(int argc, char** argv) {
                 CONFIG.unsafe_oracles.push_back(token);
             }
             i++;
+        } else if ("--quarter-clairvoyance" == argument) {
+            CONFIG.quarter_clairvoyance = true;
+            i++;
         } else if ("--log-level" == argument) {
             i++;
             const std::string log_level_str = argv[i];
@@ -173,6 +177,8 @@ int main(int argc, char** argv) {
     for (auto oracle : CONFIG.unsafe_oracles) {
         std::cout << oracle << " ";
     }
+    std::cout << std::endl;
+    std::cout << "  quarter clairvoyance: " << (CONFIG.quarter_clairvoyance ? "True" : "False") << std::endl;
     std::cout << std::endl;
     std::cout << "  log level: " << CONFIG.log_level << std::endl;
 
@@ -237,7 +243,7 @@ int main(int argc, char** argv) {
         algorithms.push_back(from_name(algorithm_name));
     }
 
-    std::vector<Result> results = graph.search(algorithms);
+    std::vector<Result> results = graph.search(algorithms, CONFIG.quarter_clairvoyance);
     std::cout << "Results: ";
     u_int64_t duration_ns = 0;
     for (size_t i = 0; i < results.size(); i++) {
