@@ -108,9 +108,9 @@ def generate_task_set_with_utilisation(
         else:
             u_HI_LO_min = 0
 
-        if u_HI_LO_min > min(u_HI, u_LO):
+        if u_HI_LO_min >= min(u_HI, u_LO):
             if verbose:
-                print(f"u_HI_LO_min > min(u_HI, u_LO): {u_HI_LO_min} > {min(u_HI, u_LO)}")
+                print(f"u_HI_LO_min >= min(u_HI, u_LO): {u_HI_LO_min} >= {min(u_HI, u_LO)}")
             continue
 
         # draw utilisation of U_HI_LO uniformly from possible range
@@ -125,7 +125,7 @@ def generate_task_set_with_utilisation(
 
         if n_HI == 1:
             u_S_tasks_HI = [u_S]
-        else:
+        elif target_switching_factor > 0:
             try:
                 u_S_tasks_HI = cfsn(n_HI, u_S, lower_constraints=u_min_for_S)
             except ZeroDivisionError:
@@ -136,6 +136,8 @@ def generate_task_set_with_utilisation(
                 print(f"Exception in CFSN utilisation in S: {e}")
                 print(f"n_tasks={n_tasks}, u_S={u_S}, u_min_for_S={u_min_for_S}")
                 exit(1)
+        else:
+            u_S_tasks_HI = [0] * n_HI
 
         # reconstruct full list to resume normal execution
         u_S_tasks = [0] * n_tasks

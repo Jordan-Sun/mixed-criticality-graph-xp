@@ -246,7 +246,7 @@ def campaign_schedulability(timeout_seconds: int):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
 
     # taskset_files = [taskset2filename("scheduling-rtss", benchmark)]
-    taskset_files = [taskset2filename("switching", benchmark)]
+    taskset_files = [taskset2filename("semi-clairvoyant", benchmark)]
 
 
     varying_variables = [
@@ -262,7 +262,7 @@ def campaign_schedulability(timeout_seconds: int):
     base_config = {
         "safe_oracles": [],
         "unsafe_oracles": ["hi-over-demand"],
-        "quarter_clairvoyance": False,
+            "quarter_clairvoyance": True,
     }
 
     use_cases = [
@@ -277,27 +277,25 @@ def campaign_schedulability(timeout_seconds: int):
             "use_case": "EDF-VD (ACBFS, QC)",
             "scheduler": "edfvd",
             "search_algorithms": ["acbfs"],
-            "quarter_clairvoyance": True,
         },
         {
             **base_config,
             "use_case": "EDF-VDSD (ACBFS, QC)",
             "scheduler": "edfvdsd",
             "search_algorithms": ["acbfs"],
-            "quarter_clairvoyance": True,
         },
-        {
-            **base_config,
-            "use_case": "EDF-VD (ACBFS)",
-            "scheduler": "edfvd",
-            "search_algorithms": ["acbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "EDF-VDSD (ACBFS)",
-            "scheduler": "edfvdsd",
-            "search_algorithms": ["acbfs"],
-        },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (ACBFS)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["acbfs"],
+        # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VDSD (ACBFS)",
+        #     "scheduler": "edfvdsd",
+        #     "search_algorithms": ["acbfs"],
+        # },
         # {
         #     **base_config,
         #     "use_case": "EDF-VDSD (BFS)",

@@ -15,6 +15,9 @@ def test(task_set):
         return (utilisation_of_HI_at_LO == 0) and (utilisation_of_HI_at_HI == 0)
     
     x = utilisation_of_HI_at_LO / (1 - utilisation_of_LO_at_LO)
+    if x == 1:
+        return False
+
     utilisation_EDFVDSD = 0
 
     # rename columns to allow itertuple to work
