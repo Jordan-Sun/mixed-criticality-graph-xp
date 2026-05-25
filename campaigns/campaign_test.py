@@ -271,12 +271,24 @@ def campaign_schedulability(timeout_seconds: int):
         #     "scheduler": "edfvd",
         #     "search_algorithms": ["pbfs"],
         # },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VD (ACBFS)",
+        #     "scheduler": "edfvd",
+        #     "search_algorithms": ["acbfs"],
+        # },
         {
             **base_config,
-            "use_case": "EDF-VD (ACBFS)",
-            "scheduler": "edfvd",
+            "use_case": "EDF-VDSD (ACBFS)",
+            "scheduler": "edfvdsd",
             "search_algorithms": ["acbfs"],
         },
+        # {
+        #     **base_config,
+        #     "use_case": "EDF-VDSD (BFS)",
+        #     "scheduler": "edfvdsd",
+        #     "search_algorithms": ["bfs"],
+        # },
         # {
         #     **base_config,
         #     "use_case": "EDF-VD (PACBFS)",

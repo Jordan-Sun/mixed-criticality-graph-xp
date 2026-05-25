@@ -181,6 +181,8 @@ int main(int argc, char** argv) {
     std::function<int(State*)> scheduler;
     if ("edfvd" == CONFIG.scheduler) {
         scheduler = Scheduler::edfvd;
+    } else if ("edfvdsd" == CONFIG.scheduler) {
+        scheduler = Scheduler::edfvdsd;
     } else if ("lwlf" == CONFIG.scheduler) {
         scheduler = Scheduler::lwlf;
     } else {

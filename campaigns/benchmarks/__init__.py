@@ -145,7 +145,7 @@ class MCSBench(Benchmark):
             environment = {}
         environment["INTERACTIVE"] = "0"
 
-        if scheduler not in ["edfvd", "lwlf"]:
+        if scheduler not in ["edfvd", "edfvdsd", "lwlf"]:
             raise ValueError(f"Unknown scheduler: {scheduler}")
         for safe_oracle in safe_oracles:
             if safe_oracle not in ["hi-idle-point"]:

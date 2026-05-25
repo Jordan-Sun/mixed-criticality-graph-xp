@@ -13,9 +13,9 @@ float Job::get_ttvd(float discount_factor) const {
 
 float Job::get_ttsd(float discount_factor) const {
     if (X == LO) return (float)get_ttd();
-    float ttsd = get_ttvd(discount_factor);
-    if (rst == 0) return ttsd;
-    return ttsd * C_s / C[0];
+    if (rst == 0) return get_ttvd(discount_factor);
+    float vd = discount_factor * T;
+    return 1.0 * nat - (1.0 * T - vd);
 }
 
 void Job::execute(bool run) {
@@ -80,10 +80,12 @@ uint64_t Job::get_hash() const {
     uint64_t hash = rct;
     uint64_t factor = C[1] + 1;
 
-    hash += nat * factor;
+    // If C_s = 0, same hash as original: rct + nat * factor
+    hash += rst * factor;
+    hash += nat * factor * (C_s + 1);
+
     return hash;
 }
-
 uint64_t Job::get_hash_factor() const {
     uint64_t factor = C[1] + 1;
     factor = factor * (T + 1);
