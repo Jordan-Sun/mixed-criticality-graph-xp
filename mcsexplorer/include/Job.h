@@ -27,6 +27,7 @@ class Job {
           C_s(other->C_s),
           C(other->C),
           p(other->p),
+          rst(other->rst),
           rct(other->rct),
           nat(other->nat),
           utilisation(other->utilisation){};

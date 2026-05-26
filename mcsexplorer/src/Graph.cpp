@@ -121,7 +121,10 @@ void Graph::handle_run_transition(std::vector<State*> const& states, std::vector
     }
 }
 
-std::vector<State*> Graph::handle_qc_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf) {
+std::vector<State*> Graph::handle_qc_run_transition(std::vector<State*> const& states,
+                                                    std::vector<int> const& to_runs,
+                                                    std::vector<int>& qc_to_runs,
+                                                    bool is_last_leaf) {
     std::vector<State*> all_run_states = std::vector<State*>{};
 
     for (size_t i = 0; i < states.size(); ++i) {
@@ -132,6 +135,7 @@ std::vector<State*> Graph::handle_qc_run_transition(std::vector<State*> const& s
 
         for (State* new_state : run_states) {
             all_run_states.push_back(new_state);
+            qc_to_runs.push_back(to_run);
             log_run(new_state, is_last_leaf);
         }
     }
@@ -141,6 +145,14 @@ std::vector<State*> Graph::handle_qc_run_transition(std::vector<State*> const& s
 
 std::vector<State*> Graph::handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
                                                         bool is_last_leaf, bool quarter_clairvoyance) {
+#ifndef NDEBUG
+    if (states.size() != to_runs.size()) {
+        std::cerr << "Internal error: handle_completion_transition got " << states.size()
+                  << " states but " << to_runs.size() << " run decisions." << std::endl;
+        exit(1);
+    }
+#endif
+
     std::vector<State*> all_completion_states = std::vector<State*>{};
 
     for (size_t i = 0; i < states.size(); ++i) {
@@ -206,14 +218,16 @@ std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states,
         }
 
         std::vector<State*> run_states;
+        std::vector<int> qc_to_runs;
         if (quarter_clairvoyance) {
-            run_states = handle_qc_run_transition(request_states, to_runs, is_last_leaf);
+            run_states = handle_qc_run_transition(request_states, to_runs, qc_to_runs, is_last_leaf);
         } else {
             handle_run_transition(request_states, to_runs, is_last_leaf);
             run_states = std::move(request_states);
         }
 
-        std::vector<State*> neighbors = handle_completion_transition(request_states, to_runs, is_last_leaf, quarter_clairvoyance);
+        std::vector<State*> neighbors = handle_completion_transition(
+            run_states, quarter_clairvoyance ? qc_to_runs : to_runs, is_last_leaf, quarter_clairvoyance);
 
         connect_neighbors_graphviz(original_leaf_state, neighbors);
 

@@ -40,7 +40,8 @@ class Graph {
 
     std::vector<State*> handle_request_transition(State* state, bool is_last_leaf, bool periodic_only = false);
     void handle_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
-    std::vector<State*> handle_qc_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
+    std::vector<State*> handle_qc_run_transition(std::vector<State*> const& states, std::vector<int> const& to_runs,
+                           std::vector<int>& qc_to_runs, bool is_last_leaf);
     std::vector<State*> handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
                                                      bool is_last_leaf, bool quarter_clairvoyance = false);
 

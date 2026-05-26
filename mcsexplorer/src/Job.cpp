@@ -87,6 +87,7 @@ uint64_t Job::get_hash() const {
 
     return hash;
 }
+
 uint64_t Job::get_hash_factor() const {
     uint64_t factor = C[1] + 1;
     factor = factor * (T + 1);
