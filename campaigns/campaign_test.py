@@ -347,7 +347,7 @@ def _campaign_chained_variant(
     taskset_files = [
         taskset2filename(f, benchmark)
         for f in [
-            "non-clairvoyant",
+            # "non-clairvoyant",
             "quarter-clairvoyant",
         ]
     ]
@@ -365,6 +365,7 @@ def _campaign_chained_variant(
     base_config = {
         "safe_oracles": [],
         "unsafe_oracles": ["hi-over-demand"],
+        "quarter_clairvoyance": True,
     }
 
     use_cases = [
@@ -412,7 +413,8 @@ def campaigns_chained(timeout_seconds: int):
             use_case_name=use_case_name,
             search_algorithms=search_algorithms,
         )
-        for scheduler in ["edfvd", "edfvdsd", "lwlf"]
+        # for scheduler in ["edfvd", "edfvdsd", "lwlf"]
+        for scheduler in ["edfvdsd"]
         for use_case_name, search_algorithms in use_case_specs
     ]
 
@@ -711,8 +713,8 @@ def main() -> None:
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
     # parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=8) # done
-    for campaign in campaigns_schedulability(timeout_seconds=min15):
-        parallel_runner(campaign=campaign, nb_cpus=16)
+    # for campaign in campaigns_schedulability(timeout_seconds=min15):
+    #     parallel_runner(campaign=campaign, nb_cpus=16)
     for campaign in campaigns_chained(timeout_seconds=min15):
         parallel_runner(campaign=campaign, nb_cpus=16)
     # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)
