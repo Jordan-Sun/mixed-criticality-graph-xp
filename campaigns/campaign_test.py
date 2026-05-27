@@ -319,11 +319,9 @@ def _campaign_schedulability_variant(
 
 def campaigns_schedulability(timeout_seconds: int):
     use_case_specs = [
-        # ("edfvd", False),
+        ("edfvd", False),
         ("edfvd", True),
-        # ("edfvdsd", False),
         ("edfvdsd", True),
-        # ("lwlf", False),
         ("lwlf", True),
     ]
     return [
@@ -715,8 +713,8 @@ def main() -> None:
     # parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=8) # done
     for campaign in campaigns_schedulability(timeout_seconds=min15):
         parallel_runner(campaign=campaign, nb_cpus=32)
-    # for campaign in campaigns_chained(timeout_seconds=min15):
-    #     parallel_runner(campaign=campaign, nb_cpus=32)
+    for campaign in campaigns_chained(timeout_seconds=min15):
+        parallel_runner(campaign=campaign, nb_cpus=32)
     # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)
     # parallel_runner(campaign=campaign_compression_table(timeout_seconds=min15), nb_cpus=128)
 

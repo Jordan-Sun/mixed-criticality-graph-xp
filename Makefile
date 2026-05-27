@@ -300,7 +300,7 @@ generate-set-quarter-clairvoyant: $(VENV)
 	-o $(OUTPUT_DIR)/$(DT)-quarter-clairvoyant.txt \
 	-c $(OUTPUT_DIR)/$(DT)-quarter-clairvoyant.csv \
 	--probability_of_HI 0.5 \
-	--target_switching_factor 0.25 \
+	--target_switching_factor 0.1 \
 	--minimum_period 5 \
 	--max_period_list 30 \
 	--n_tasks_list 5 \
