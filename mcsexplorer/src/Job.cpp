@@ -15,7 +15,7 @@ float Job::get_ttsd(float discount_factor) const {
     if (X == LO) return (float)get_ttd();
     if (rst == 0) return get_ttvd(discount_factor);
     float vd = discount_factor * T;
-    return 1.0 * nat - (1.0 * T - vd);
+    return 1.0 * nat - (1.0 * T - vd * C_s / C[0]);
 }
 
 void Job::execute(bool run) {
