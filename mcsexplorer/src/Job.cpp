@@ -91,6 +91,8 @@ uint64_t Job::get_hash() const {
 uint64_t Job::get_hash_factor() const {
     uint64_t factor = C[1] + 1;
     factor = factor * (T + 1);
+    // Idle simulation relationship is preserved and we do not need to account for rst.
+    // factor = factor * (T + 1);
     return factor;
 }
 
@@ -99,6 +101,11 @@ uint64_t Job::get_hash_idle() const {
     uint64_t factor = C[1] + 1;
 
     if (rct > 0) hash += nat * factor;
+    // Idle simulation relationship is preserved and we do not need to account for rst.
+    // {
+    //     hash += rst * factor;
+    //     hash += nat * factor * (C_s + 1);
+    // }
 
     return hash;
 }
