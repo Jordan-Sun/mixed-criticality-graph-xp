@@ -119,7 +119,9 @@ int Job::get_next_jobs(int t, Criticality alpha) const {
 int Job::get_demand(int t, Criticality alpha, Criticality current_crit) const {
     if (t < get_ttd() or X < alpha) return 0;
 
-    if (rct > 0)
+    if (rst == 0)
+        return rct + get_next_jobs(t, alpha) * C[alpha - 1];
+    else if (rct > 0)
         return rct + C[alpha - 1] - C[current_crit - 1] + get_next_jobs(t, alpha) * C[alpha - 1];
     else
         return get_next_jobs(t, alpha) * C[alpha - 1];

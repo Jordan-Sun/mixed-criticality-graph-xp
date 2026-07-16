@@ -319,10 +319,10 @@ def _campaign_schedulability_variant(
 
 def campaigns_schedulability(timeout_seconds: int):
     use_case_specs = [
-        ("edfvd", False),
-        ("edfvd", True),
-        ("edfvdsd", True),
-        # ("lwlf", True),
+        # ("edfvd", False),
+        # ("edfvd", True),
+        # ("edfvdsd", True),
+        ("lwlf", True),
     ]
     return [
         _campaign_schedulability_variant(
