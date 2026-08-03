@@ -28,20 +28,21 @@ class Graph {
           unsafe_oracles(unsafe_oracles_){};
 
     bool is_fail(std::vector<State*> const& states);
-    void run_tansition(State* state, int to_run);
-    std::vector<State*> qc_run_transition(State* state, int to_run);
-    std::vector<State*> completion_transition(State* state, int to_run);
-    std::vector<State*> qc_completion_transition(State* state, int to_run);
+
     std::vector<State*> request_transition(State* state);
     std::vector<State*> request_periodic_transition(State* state);
+    // std::vector<State*> hi_checkpoint_transition(State* state);
+    std::vector<State*> to_run_checkpoint_transition(State* state, int to_run_index = -1);
+    void run_tansition(State* state, int to_run);
+    std::vector<State*> completion_transition(State* state, int to_run);
+    std::vector<State*> qc_completion_transition(State* state, int to_run);
 
     bool has_unsafe(std::vector<State*> const& states);
     void handle_safe(std::vector<State*>& states);
 
     std::vector<State*> handle_request_transition(State* state, bool is_last_leaf, bool periodic_only = false);
+    std::tuple<std::vector<State*>, std::vector<int>> handle_to_run_checkpoint_transition(std::vector<State*> const& states, std::vector<int> const& to_runs, bool is_last_leaf = false);
     void handle_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
-    std::vector<State*> handle_qc_run_transition(std::vector<State*> const& states, std::vector<int> const& to_runs,
-                           std::vector<int>& qc_to_runs, bool is_last_leaf);
     std::vector<State*> handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
                                                      bool is_last_leaf, bool quarter_clairvoyance = false);
 
@@ -72,6 +73,7 @@ class Graph {
     void log_unsafe(State* unsafe_state);
     void log_safe(State* safe_state);
     void log_start(State* state, bool is_last_leaf);
+    void log_to_run_checkpoint(State* state, bool is_last_leaf);
     void log_run(State* state, bool is_last_leaf);
     void log_completion(State* state, bool is_last_leaf, bool is_last_state);
     void log_request(State* state, bool is_last_leaf);

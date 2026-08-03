@@ -72,21 +72,24 @@ bool State::is_fail() const {
     return false;
 }
 
-void State::run_tansition(int to_run_index = -1) {
-    const int n = jobs.size();
-    for (int i = 0; i < n; ++i) {
-        jobs[i]->execute(i == to_run_index);
+void State::request_transition(std::vector<int> const& requestings) {
+    for (int i : requestings) {
+        jobs[i]->request(crit);
     }
 }
 
-void State::qc_run_transition(int to_run_index, bool signals_mode_switch = false) {
-    const int n = jobs.size();
+void State::to_run_checkpoint_transition(int to_run_index = -1, bool signals_mode_switch = false) {
     if (signals_mode_switch and crit == LO and to_run_index > -1 and jobs[to_run_index]->get_rst() > 0) {
+        const int n = jobs.size();
         for (int i = 0; i < n; ++i) {
             jobs[i]->critic(crit, crit + 1, i == to_run_index);
         }
         crit = HI;
     }
+}
+
+void State::run_tansition(int to_run_index = -1) {
+    const int n = jobs.size();
     for (int i = 0; i < n; ++i) {
         jobs[i]->execute(i == to_run_index);
     }
@@ -111,12 +114,6 @@ void State::qc_completion_transition(int ran_index, bool signals_completion = fa
 
     if (jobs[ran_index]->is_implicitly_completed(crit) or signals_completion) {
         jobs[ran_index]->terminate();
-    }
-}
-
-void State::request_transition(std::vector<int> const& requestings) {
-    for (int i : requestings) {
-        jobs[i]->request(crit);
     }
 }
 

@@ -24,11 +24,13 @@ class State {
 
     bool is_fail() const;
 
+    // HI and LO request transition is the same just different crit level, thus different requestings.
+    void request_transition(std::vector<int> const& requestings);
+    void hi_checkpoint_transition(std::vector<int> const& requestings);
+    void to_run_checkpoint_transition(int to_run_index, bool signals_mode_switch);
     void run_tansition(int to_run_index);
-    void qc_run_transition(int to_run_index, bool signals_mode_switch);
     void completion_transition(int ran_index, bool signals_completion);
     void qc_completion_transition(int ran_index, bool signals_completion);
-    void request_transition(std::vector<int> const& requestings);
 
     size_t n() const { return jobs.size(); }
     Criticality get_crit() const { return crit; };

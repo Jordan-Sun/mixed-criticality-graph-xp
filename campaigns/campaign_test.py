@@ -322,8 +322,8 @@ def campaigns_schedulability(timeout_seconds: int):
         ("edfvd", False),
         ("edfvd", True),
         ("edfvdsd", True),
-        ("lwlf", False),
-        ("lwlf", True),
+        # ("lwlf", False),
+        # ("lwlf", True),
     ]
     return [
         _campaign_schedulability_variant(

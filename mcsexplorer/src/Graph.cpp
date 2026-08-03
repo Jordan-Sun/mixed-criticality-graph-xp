@@ -18,18 +18,22 @@ bool Graph::is_fail(std::vector<State*> const& states) {
     return false;
 }
 
-void Graph::run_tansition(State* state, int to_run) { state->run_tansition(to_run); }
+// std::vector<State*> Graph::hi_checkpoint_transition(State* state) {
+//     // Todo: implement hi_checkpoint_transition
+// }
 
-std::vector<State*> Graph::qc_run_transition(State* state, int to_run) {
+std::vector<State*> Graph::to_run_checkpoint_transition(State* state, int to_run_index) {
     State* state_signals = new State(*state);
-    state->qc_run_transition(to_run, false);
-    state_signals->qc_run_transition(to_run, true);
+    state->to_run_checkpoint_transition(to_run_index, false);
+    state_signals->to_run_checkpoint_transition(to_run_index, true);
     if (state->get_hash() != state_signals->get_hash()) {
         return std::vector<State*>{state, state_signals};
     }
     delete state_signals;
     return std::vector<State*>{state};
 }
+
+void Graph::run_tansition(State* state, int to_run) { state->run_tansition(to_run); }
 
 std::vector<State*> Graph::completion_transition(State* state, int to_run) {
     State* state_signals = new State(*state);
@@ -111,6 +115,27 @@ void Graph::handle_safe(std::vector<State*>& states) {
     }
 }
 
+std::tuple<std::vector<State*>, std::vector<int>> Graph::handle_to_run_checkpoint_transition(std::vector<State*> const& states, std::vector<int> const& to_runs,
+                                                            bool is_last_leaf) {
+    std::vector<State*> all_checked_states = std::vector<State*>{};
+    std::vector<int> all_checked_to_runs = std::vector<int>{};
+
+    for (size_t i = 0; i < states.size(); ++i) {
+        State* state = states[i];
+        int to_run = to_runs[i];
+
+        std::vector<State*> checked_states = to_run_checkpoint_transition(state, to_run);
+
+        for (State* new_state : checked_states) {
+            all_checked_states.push_back(new_state);
+            all_checked_to_runs.push_back(to_run);
+            log_to_run_checkpoint(new_state, is_last_leaf);
+        }
+    }
+
+    return std::make_tuple(all_checked_states, all_checked_to_runs);
+}
+
 void Graph::handle_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf) {
     for (size_t i = 0; i < states.size(); ++i) {
         State* state = states[i];
@@ -119,28 +144,6 @@ void Graph::handle_run_transition(std::vector<State*> const& states, std::vector
         run_tansition(state, to_run);
         log_run(state, is_last_leaf);
     }
-}
-
-std::vector<State*> Graph::handle_qc_run_transition(std::vector<State*> const& states,
-                                                    std::vector<int> const& to_runs,
-                                                    std::vector<int>& qc_to_runs,
-                                                    bool is_last_leaf) {
-    std::vector<State*> all_run_states = std::vector<State*>{};
-
-    for (size_t i = 0; i < states.size(); ++i) {
-        State* state = states[i];
-        int to_run = to_runs[i];
-
-        std::vector<State*> run_states = qc_run_transition(state, to_run);
-
-        for (State* new_state : run_states) {
-            all_run_states.push_back(new_state);
-            qc_to_runs.push_back(to_run);
-            log_run(new_state, is_last_leaf);
-        }
-    }
-
-    return all_run_states;
 }
 
 std::vector<State*> Graph::handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
@@ -217,17 +220,19 @@ std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states,
             to_runs.push_back(schedule(request_state));
         }
 
-        std::vector<State*> run_states;
-        std::vector<int> qc_to_runs;
+        std::vector<State*> checked_states;
+        std::vector<int> checked_to_runs;
         if (quarter_clairvoyance) {
-            run_states = handle_qc_run_transition(request_states, to_runs, qc_to_runs, is_last_leaf);
+            std::tie(checked_states, checked_to_runs) = handle_to_run_checkpoint_transition(request_states, to_runs, is_last_leaf);
         } else {
-            handle_run_transition(request_states, to_runs, is_last_leaf);
-            run_states = std::move(request_states);
+            checked_states = std::move(request_states);
+            checked_to_runs = std::move(to_runs);
         }
 
-        std::vector<State*> neighbors = handle_completion_transition(
-            run_states, quarter_clairvoyance ? qc_to_runs : to_runs, is_last_leaf, quarter_clairvoyance);
+        handle_run_transition(checked_states, checked_to_runs, is_last_leaf);
+
+        std::vector<State*> neighbors =
+            handle_completion_transition(checked_states, checked_to_runs, is_last_leaf, quarter_clairvoyance);
 
         connect_neighbors_graphviz(original_leaf_state, neighbors);
 
@@ -723,6 +728,13 @@ void Graph::log_start(State* state, bool is_last_leaf) {
     if (verbose >= 2) {
         std::cout << "│" << second_hiearchy_char << "┬ ";
         std::cout << "START " << state->str() << std::endl;
+    }
+}
+
+void Graph::log_to_run_checkpoint(State* state, bool is_last_leaf) {
+    if (verbose >= 2) {
+        std::cout << "│" << get_second_hiearchy_char(is_last_leaf) << "├ ";
+        std::cout << "RCHECK " << state->str() << std::endl;
     }
 }
 
