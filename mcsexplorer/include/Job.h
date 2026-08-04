@@ -27,7 +27,6 @@ class Job {
           C_s(other->C_s),
           C(other->C),
           p(other->p),
-          rst(other->rst),
           rct(other->rct),
           nat(other->nat),
           utilisation(other->utilisation){};
@@ -43,7 +42,10 @@ class Job {
     int get_C(Criticality criticality) const { return C[criticality - 1]; };
     int get_p() const { return p; };
 
-    int get_rst() const { return rst; };
+    int get_rst(Criticality current_crit) const { 
+        if (current_crit == LO) return std::max(rct - C[0] + C_s, 0); 
+        return 0;
+    };
     int get_rct() const { return rct; };
     int get_nat() const { return nat; };
 
@@ -53,7 +55,7 @@ class Job {
     int get_laxity() const { return get_ttd() - rct; };
     int get_worst_laxity(Criticality current_crit) const { return get_ttd() - rct - (C[1] - C[current_crit - 1]); };
 
-    bool is_unchecked() const { return rst > 0; };
+    bool is_unchecked(Criticality current_crit) const { return get_rst(current_crit) > 0; };
     bool is_active() const { return rct > 0; };
     bool is_eligible(int crit) const { return rct == 0 and nat == 0 and X >= crit; };
     bool is_implicitly_completed(int crit) const { return rct == 0 and C[crit - 1] == C[X - 1]; };
@@ -90,7 +92,6 @@ class Job {
     std::vector<int> C;
     int p;  // priority for FJP/FTP
 
-    int rst; // remaining switching time
     int rct;
     int nat;
 
