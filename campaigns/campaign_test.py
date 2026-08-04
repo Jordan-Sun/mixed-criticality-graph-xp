@@ -253,7 +253,8 @@ def _campaign_schedulability_variant(
         taskset2filename(f, benchmark)
         for f in [
             # "non-clairvoyant",
-            "quarter-clairvoyant",
+            "semi-clairvoyant",
+            # "quarter-clairvoyant",
         ]
     ]
 
@@ -275,18 +276,6 @@ def _campaign_schedulability_variant(
 
     use_case_suffix = "QC" if quarter_clairvoyance else "NC"
     use_cases = [
-        # {
-        #     **base_config,
-        #     "use_case": f"{scheduler.upper()} (PBFS, {use_case_suffix})",
-        #     "scheduler": scheduler,
-        #     "search_algorithms": ["pbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": f"{scheduler.upper()} (PACBFS, {use_case_suffix})",
-        #     "scheduler": scheduler,
-        #     "search_algorithms": ["pacbfs"],
-        # },
         {
             **base_config,
             "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
