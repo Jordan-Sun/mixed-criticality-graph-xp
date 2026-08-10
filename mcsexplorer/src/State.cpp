@@ -45,9 +45,19 @@ std::vector<size_t> State::get_implicitly_completeds() const {
     return vect;
 }
 
-std::vector<size_t> State::get_eligibles() {
+std::vector<size_t> State::get_eligibles(CriticalityFilter filter) {
     std::vector<size_t> vect;
     for (size_t i = 0; i < jobs.size(); ++i) {
+        switch (filter) {
+            case LO_ONLY:
+                if (jobs[i]->get_X() != LO) continue;
+                break;
+            case HI_ONLY:
+                if (jobs[i]->get_X() != HI) continue;
+                break;
+            case ALL:
+                break;
+        }
         if (jobs[i]->is_eligible(crit)) {
             vect.push_back(i);
         }
@@ -75,6 +85,20 @@ bool State::is_fail() const {
 void State::request_transition(std::vector<int> const& requestings) {
     for (int i : requestings) {
         jobs[i]->request(crit);
+    }
+}
+
+void State::hi_checkpoint_transition(std::vector<int> const& requestings, bool signals_mode_switch = false) {
+    if (signals_mode_switch and crit == LO) {
+        const bool can_trigger = std::ranges::any_of(requestings, [&](int i) { return jobs[i]->get_rst(crit) == 0; });
+        if (can_trigger) {
+            const int n = jobs.size();
+            for (int i = 0; i < n; ++i) {
+                // Note: this is faster and it won't matter for those who triggered since they are just released and persumably have rct = C[0] > 0.
+                jobs[i]->critic(crit, crit + 1, false);
+            }
+            crit = HI;
+        }
     }
 }
 

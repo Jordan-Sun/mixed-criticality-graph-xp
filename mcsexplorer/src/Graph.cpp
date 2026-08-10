@@ -18,11 +18,92 @@ bool Graph::is_fail(std::vector<State*> const& states) {
     return false;
 }
 
-// std::vector<State*> Graph::hi_checkpoint_transition(State* state) {
-//     // Todo: implement hi_checkpoint_transition
-// }
+std::vector<State*> Graph::request_transition(State* state, CriticalityFilter filter) {
+    std::vector<State*> new_states;
+
+    std::vector<size_t> eligibles_candidates = state->get_eligibles(filter);
+    std::vector<std::vector<int>> all_eligibles = power_set(eligibles_candidates);
+
+    for (std::vector<int> const& current_eligibles : all_eligibles) {
+        State* request_state = new State(*state);
+        request_state->request_transition(current_eligibles);
+        new_states.push_back(request_state);
+    }
+
+    delete state;
+
+    return new_states;
+}
+
+std::vector<State*> Graph::request_periodic_transition(State* state, CriticalityFilter filter) {
+    std::vector<State*> new_states;
+
+    std::vector<size_t> eligibles_candidates = state->get_eligibles(filter);
+    std::vector<int> eligibles_candidates_int =
+        std::vector<int>(eligibles_candidates.begin(), eligibles_candidates.end());
+    State* request_state = new State(*state);
+    request_state->request_transition(eligibles_candidates_int);
+    new_states.push_back(request_state);
+
+    delete state;
+
+    return new_states;
+}
+
+std::vector<std::tuple<State*, std::vector<int>>> Graph::hi_request_transition(State* state) {
+    std::vector<std::tuple<State*, std::vector<int>>> new_states_requestings;
+
+    std::vector<size_t> eligibles_candidates = state->get_eligibles(CriticalityFilter::HI_ONLY);
+    std::vector<std::vector<int>> all_eligibles = power_set(eligibles_candidates);
+
+    for (std::vector<int> const& current_eligibles : all_eligibles) {
+        State* request_state = new State(*state);
+        request_state->request_transition(current_eligibles);
+        new_states_requestings.push_back(std::make_tuple(request_state, current_eligibles));
+    }
+
+    delete state;
+
+    return new_states_requestings;
+}
+
+std::vector<std::tuple<State*, std::vector<int>>> Graph::hi_request_periodic_transition(State* state) {
+    std::vector<std::tuple<State*, std::vector<int>>> new_states_requestings;
+
+    std::vector<size_t> eligibles_candidates = state->get_eligibles(CriticalityFilter::HI_ONLY);
+    std::vector<int> eligibles_candidates_int =
+        std::vector<int>(eligibles_candidates.begin(), eligibles_candidates.end());
+    State* request_state = new State(*state);
+    request_state->request_transition(eligibles_candidates_int);
+    new_states_requestings.push_back(std::make_tuple(request_state, eligibles_candidates_int));
+
+    delete state;
+
+    return new_states_requestings;
+}
+
+std::vector<State*> Graph::hi_checkpoint_transition(State* state, std::vector<int> const& requestings) {
+    // // Skip upon HI crit
+    // if (state->get_crit() == HI) {
+    //     return std::vector<State*>{state};
+    // }
+
+    State* state_signals = new State(*state);
+    state->hi_checkpoint_transition(requestings, false);
+    state_signals->hi_checkpoint_transition(requestings, true);
+    if (state->get_hash() != state_signals->get_hash()) {
+        return std::vector<State*>{state, state_signals};
+    }
+    delete state_signals;
+    return std::vector<State*>{state};
+}
 
 std::vector<State*> Graph::to_run_checkpoint_transition(State* state, int to_run_index) {
+    // // Skip upon HI crit
+    // if (state->get_crit() == HI) {
+    //     return std::vector<State*>{state};
+    // }
+
     State* state_signals = new State(*state);
     state->to_run_checkpoint_transition(to_run_index, false);
     state_signals->to_run_checkpoint_transition(to_run_index, true);
@@ -57,38 +138,6 @@ std::vector<State*> Graph::qc_completion_transition(State* state, int to_run) {
     return std::vector<State*>{state};
 }
 
-std::vector<State*> Graph::request_transition(State* state) {
-    std::vector<State*> new_states;
-
-    std::vector<size_t> eligibles_candidates = state->get_eligibles();
-    std::vector<std::vector<int>> all_eligibles = power_set(eligibles_candidates);
-
-    for (std::vector<int> const& current_eligibles : all_eligibles) {
-        State* request_state = new State(*state);
-        request_state->request_transition(current_eligibles);
-        new_states.push_back(request_state);
-    }
-
-    delete state;
-
-    return new_states;
-}
-
-std::vector<State*> Graph::request_periodic_transition(State* state) {
-    std::vector<State*> new_states;
-
-    std::vector<size_t> eligibles_candidates = state->get_eligibles();
-    std::vector<int> eligibles_candidates_int =
-        std::vector<int>(eligibles_candidates.begin(), eligibles_candidates.end());
-    State* request_state = new State(*state);
-    request_state->request_transition(eligibles_candidates_int);
-    new_states.push_back(request_state);
-
-    delete state;
-
-    return new_states;
-}
-
 bool Graph::has_unsafe(std::vector<State*> const& states) {
     for (std::function<bool(State*)> unsafe_oracle : unsafe_oracles) {
         for (State* current_state : states) {
@@ -113,6 +162,67 @@ void Graph::handle_safe(std::vector<State*>& states) {
 
         states.erase(std::remove_if(states.begin(), states.end(), safe_oracle), states.end());
     }
+}
+
+std::vector<State*> Graph::handle_request_transition(State* state, bool is_last_leaf, bool periodic_only, CriticalityFilter filter) {
+    std::vector<State*> request_states;
+    if (periodic_only) {
+        request_states = request_periodic_transition(state);
+    } else {
+        request_states = request_transition(state, filter);
+    }
+
+    for (size_t i = 0; i < request_states.size(); ++i) {
+        State* request_state = request_states[i];
+        log_request(request_state, is_last_leaf);
+    }
+
+    return request_states;
+}
+
+std::vector<std::tuple<State*, std::vector<int>>> Graph::handle_hi_request_transition(State* state, bool is_last_leaf, bool periodic_only) {
+    std::vector<std::tuple<State*, std::vector<int>>> request_states;
+    if (periodic_only) {
+        request_states = hi_request_periodic_transition(state);
+    } else {
+        request_states = hi_request_transition(state);
+    }
+
+    for (size_t i = 0; i < request_states.size(); ++i) {
+        State* request_state = std::get<0>(request_states[i]);
+        log_request(request_state, is_last_leaf);
+    }
+
+    return request_states;
+}
+
+std::vector<State*> Graph::handle_hi_checkpoint_transition(std::vector<std::tuple<State*, std::vector<int>>> const& request_states, bool is_last_leaf) {
+    std::vector<State*> checked_states;
+
+    for (auto const& [request_state, requestings] : request_states) {
+        std::vector<State*> new_checked_states = hi_checkpoint_transition(request_state, requestings);
+
+        for (State* new_state : new_checked_states) {
+            checked_states.push_back(new_state);
+            log_hi_checkpoint(new_state, is_last_leaf);
+        }
+    }
+
+    return checked_states;
+}
+
+std::vector<State*> Graph::handle_lo_request_transition(std::vector<State*> const& states, bool is_last_leaf, bool periodic_only) {
+    std::vector<State*> request_states;
+
+    for (State* state : states) {
+        std::vector<State*> new_request_states = handle_request_transition(state, is_last_leaf, periodic_only, CriticalityFilter::LO_ONLY);
+
+        for (State* new_state : new_request_states) {
+            request_states.push_back(new_state);
+        }
+    }
+
+    return request_states;
 }
 
 std::tuple<std::vector<State*>, std::vector<int>> Graph::handle_to_run_checkpoint_transition(std::vector<State*> const& states, std::vector<int> const& to_runs,
@@ -185,22 +295,6 @@ std::vector<State*> Graph::handle_completion_transition(std::vector<State*> cons
     return all_completion_states;
 }
 
-std::vector<State*> Graph::handle_request_transition(State* state, bool is_last_leaf, bool periodic_only) {
-    std::vector<State*> request_states;
-    if (periodic_only) {
-        request_states = request_periodic_transition(state);
-    } else {
-        request_states = request_transition(state);
-    }
-
-    for (size_t i = 0; i < request_states.size(); ++i) {
-        State* request_state = request_states[i];
-        log_request(request_state, is_last_leaf);
-    }
-
-    return request_states;
-}
-
 std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only, bool quarter_clairvoyance) {
     std::vector<State*> new_states;
 
@@ -212,8 +306,15 @@ std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states,
         bool is_last_leaf = leaf_i == leaf_states.size() - 1;
         log_start(current_state, is_last_leaf);
 
-        // apply all three transitions
-        std::vector<State*> request_states = handle_request_transition(current_state, is_last_leaf, periodic_only);
+        // apply all six transitions
+        // if (current_state->get_crit() == HI) {
+        //     // Optimization: Request all if already in HI crit and skip release checkpoint.
+        //     std::vector<State*> request_states = handle_request_transition(current_state, is_last_leaf, periodic_only);
+        // } else {
+        std::vector<std::tuple<State*, std::vector<int>>> hi_request_states = handle_hi_request_transition(current_state, is_last_leaf, periodic_only);
+        std::vector<State*> hi_checked_states = handle_hi_checkpoint_transition(hi_request_states, is_last_leaf);
+        std::vector<State*> request_states = handle_lo_request_transition(hi_checked_states, is_last_leaf, periodic_only);
+        // }
 
         std::vector<int> to_runs = std::vector<int>{};
         for (State* request_state : request_states) {
@@ -728,6 +829,13 @@ void Graph::log_start(State* state, bool is_last_leaf) {
     if (verbose >= 2) {
         std::cout << "│" << second_hiearchy_char << "┬ ";
         std::cout << "START " << state->str() << std::endl;
+    }
+}
+
+void Graph::log_hi_checkpoint(State* state, bool is_last_leaf) {
+    if (verbose >= 2) {
+        std::cout << "│" << get_second_hiearchy_char(is_last_leaf) << "├ ";
+        std::cout << "HICHECK " << state->str() << std::endl;
     }
 }
 
