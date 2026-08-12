@@ -309,11 +309,11 @@ std::vector<State*> Graph::get_neighbors(std::vector<State*> const& leaf_states,
         // apply all six transitions
         // if (current_state->get_crit() == HI) {
         //     // Optimization: Request all if already in HI crit and skip release checkpoint.
-        //     std::vector<State*> request_states = handle_request_transition(current_state, is_last_leaf, periodic_only);
+        std::vector<State*> request_states = handle_request_transition(current_state, is_last_leaf, periodic_only);
         // } else {
-        std::vector<std::tuple<State*, std::vector<int>>> hi_request_states = handle_hi_request_transition(current_state, is_last_leaf, periodic_only);
-        std::vector<State*> hi_checked_states = handle_hi_checkpoint_transition(hi_request_states, is_last_leaf);
-        std::vector<State*> request_states = handle_lo_request_transition(hi_checked_states, is_last_leaf, periodic_only);
+        // std::vector<std::tuple<State*, std::vector<int>>> hi_request_states = handle_hi_request_transition(current_state, is_last_leaf, periodic_only);
+        // std::vector<State*> hi_checked_states = handle_hi_checkpoint_transition(hi_request_states, is_last_leaf);
+        // std::vector<State*> request_states = handle_lo_request_transition(hi_checked_states, is_last_leaf, periodic_only);
         // }
 
         std::vector<int> to_runs = std::vector<int>{};

@@ -252,8 +252,8 @@ def _campaign_schedulability_variant(
     taskset_files = [
         taskset2filename(f, benchmark)
         for f in [
-            # "non-clairvoyant",
-            "semi-clairvoyant",
+            "non-clairvoyant",
+            # "semi-clairvoyant",
             # "quarter-clairvoyant",
         ]
     ]

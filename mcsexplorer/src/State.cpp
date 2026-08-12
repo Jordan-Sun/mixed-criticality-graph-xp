@@ -94,7 +94,6 @@ void State::hi_checkpoint_transition(std::vector<int> const& requestings, bool s
         if (can_trigger) {
             const int n = jobs.size();
             for (int i = 0; i < n; ++i) {
-                // Note: this is faster and it won't matter for those who triggered since they are just released and persumably have rct = C[0] > 0.
                 jobs[i]->critic(crit, crit + 1, false);
             }
             crit = HI;

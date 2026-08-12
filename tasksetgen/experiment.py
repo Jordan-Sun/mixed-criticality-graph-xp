@@ -9,6 +9,7 @@ from tqdm import tqdm
 from EDFVD import test as test_edfvd
 from EDFVD import new_test as test_edfvd_new
 from EDFVDSD import test as test_edfvdsd
+from OPT_SEMI import test as test_opt_semi
 from set_generator import generate_random_task_set, generate_task_set_with_utilisation
 
 
@@ -67,6 +68,7 @@ def generate_per_n_tasks(
             task_set_info["EDFVD_test"] = int(test_edfvd(task_set))
             task_set_info["EDFVD_test_new"] = int(test_edfvd_new(task_set))
             task_set_info["EDFVDSD_test"] = int(test_edfvdsd(task_set))
+            task_set_info["OPT_SEMI_test"] = int(test_opt_semi(task_set))
 
             task_sets_header = pd.concat([task_sets_header, task_set_info.to_frame().T], ignore_index=True)
 
@@ -138,6 +140,7 @@ def generate_per_utilisation(
             task_set_info["EDFVD_test"] = int(test_edfvd(task_set))
             task_set_info["EDFVD_test_new"] = int(test_edfvd_new(task_set))
             task_set_info["EDFVDSD_test"] = int(test_edfvdsd(task_set))
+            task_set_info["OPT_SEMI_test"] = int(test_opt_semi(task_set))
 
             task_sets_header = pd.concat([task_sets_header, task_set_info.to_frame().T], ignore_index=True)
 
@@ -229,6 +232,7 @@ def generate_modular(
                         task_set_info["EDFVD_test"] = int(edfvd_suff)
                         task_set_info["EDFVD_test_new"] = int(test_edfvd_new(task_set))
                         task_set_info["EDFVDSD_test"] = int(test_edfvdsd(task_set))
+                        task_set_info["OPT_SEMI_test"] = int(test_opt_semi(task_set))
                         task_set_info["probability_of_HI"] = probability_of_HI
                         task_set_info["min_period"] = min_period
                         task_set_info["max_period"] = max_period

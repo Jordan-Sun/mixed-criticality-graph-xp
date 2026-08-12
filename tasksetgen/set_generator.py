@@ -101,20 +101,8 @@ def generate_task_set_with_utilisation(
         # infer utilisation of LO to match target average utilisation
         u_LO = 2 * target_average_utilisation - u_HI
 
-        # tasks must have a min wcst of 1, this inferieng what is the min utilisation based on the period
-        u_min_for_S = [1 / periods[i] for i in tasks_HI]
-        if target_switching_factor > 0:
-            u_HI_LO_min = sum(u_min_for_S) / target_switching_factor
-        else:
-            u_HI_LO_min = 0
-
-        if u_HI_LO_min >= min(u_HI, u_LO):
-            if verbose:
-                print(f"u_HI_LO_min >= min(u_HI, u_LO): {u_HI_LO_min} >= {min(u_HI, u_LO)}")
-            continue
-
         # draw utilisation of U_HI_LO uniformly from possible range
-        u_HI_LO = uniform(u_HI_LO_min, min(u_HI, u_LO))
+        u_HI_LO = uniform(0, min(u_HI, u_LO))
         u_S = target_switching_factor * u_HI_LO
 
         u_avg = (u_HI + u_LO) / 2  # should always be == u_target
@@ -127,14 +115,13 @@ def generate_task_set_with_utilisation(
             u_S_tasks_HI = [u_S]
         elif target_switching_factor > 0:
             try:
-                u_S_tasks_HI = cfsn(n_HI, u_S, lower_constraints=u_min_for_S)
+                u_S_tasks_HI = cfsn(n_HI, u_S)
             except ZeroDivisionError:
                 if verbose:
                     print("ZeroDivisionError in CFSN utilisation in S")
                 continue 
             except Exception as e:
                 print(f"Exception in CFSN utilisation in S: {e}")
-                print(f"n_tasks={n_tasks}, u_S={u_S}, u_min_for_S={u_min_for_S}")
                 exit(1)
         else:
             u_S_tasks_HI = [0] * n_HI
