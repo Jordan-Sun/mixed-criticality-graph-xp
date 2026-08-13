@@ -93,8 +93,11 @@ void State::hi_checkpoint_transition(std::vector<int> const& requestings, bool s
         const bool can_trigger = std::ranges::any_of(requestings, [&](int i) { return jobs[i]->get_rst(crit) == 0; });
         if (can_trigger) {
             const int n = jobs.size();
+            size_t req_idx = 0;
             for (int i = 0; i < n; ++i) {
-                jobs[i]->critic(crit, crit + 1, false);
+                const bool is_req = (req_idx < requestings.size()) && (i == requestings[req_idx]);
+                jobs[i]->critic(crit, crit + 1, is_req);
+                if (is_req) ++req_idx;
             }
             crit = HI;
         }

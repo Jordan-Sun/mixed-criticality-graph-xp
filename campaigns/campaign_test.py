@@ -252,9 +252,9 @@ def _campaign_schedulability_variant(
     taskset_files = [
         taskset2filename(f, benchmark)
         for f in [
-            "non-clairvoyant",
+            # "non-clairvoyant",
             # "semi-clairvoyant",
-            # "quarter-clairvoyant",
+            "quarter-clairvoyant",
         ]
     ]
 
@@ -271,10 +271,12 @@ def _campaign_schedulability_variant(
     base_config = {
         "safe_oracles": [],
         "unsafe_oracles": ["hi-over-demand"],
+        # "unsafe_oracles": [],
         "quarter_clairvoyance": quarter_clairvoyance,
     }
 
-    use_case_suffix = "QC" if quarter_clairvoyance else "NC"
+    # use_case_suffix = "QC" if quarter_clairvoyance else "NC"
+    use_case_suffix = "QCNO" if quarter_clairvoyance else "NCNO"
     use_cases = [
         {
             **base_config,
@@ -282,6 +284,12 @@ def _campaign_schedulability_variant(
             "scheduler": scheduler,
             "search_algorithms": ["acbfs"],
         },
+        # {
+        #     **base_config,
+        #     "use_case": f"{scheduler.upper()} (BFS, {use_case_suffix})",
+        #     "scheduler": scheduler,
+        #     "search_algorithms": ["bfs"],
+        # },
     ]
     variables = [
         use_case | other_variables
