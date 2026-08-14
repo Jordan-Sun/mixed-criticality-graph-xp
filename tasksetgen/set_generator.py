@@ -10,14 +10,14 @@ from TaskSet import TaskSet
 U_MIN = 0
 U_MAX = 1
 
-P_pool = [10, 20, 50, 100]  # Weighted pool of periods for tasks
-P_weights = [25, 25, 3, 20]  # Weights for the periods in the pool
+# P_pool = [10, 20, 50, 100]  # Weighted pool of periods for tasks
+# P_weights = [25, 25, 3, 20]  # Weights for the periods in the pool
 
 def generate_task_uniform(probability_of_HI, wcet_HI_ratio, max_wcet_LO, min_period, max_period):
     offset = 0
 
-    # period = round(loguniform.rvs(min_period, max_period))
-    period = choices(P_pool, weights=P_weights, k=1)[0]
+    period = round(loguniform.rvs(min_period, max_period))
+    # period = choices(P_pool, weights=P_weights, k=1)[0]
 
     wcet = [randrange(1, min(max_wcet_LO, period) + 1)] * 2
 
@@ -191,17 +191,16 @@ def generate_task_set_with_utilisation(
                 wcet[1] = round(period * u_HI)
                 criticality_level = 1
 
+            # verify wcst <= wcet[0] <= wcet[1] <= period
+            if not (wcst <= wcet[0] <= wcet[1] <= period):
+                print(f"C_S={wcst} <= C_LO={wcet[0]} <= C_HI={wcet[1]} <= period={period} not satisfied for task {i}.")
+                exit(1)
+
             offset = 0
             deadline = period  # implicit deadline
             task = Task(offset, period, deadline, criticality_level, wcet, wcst)
 
             task_set.add_task(task)
-
-        hi_tasks = task_set.tasks["X"] == 1
-        if (task_set.tasks.loc[hi_tasks, "C1"] < task_set.tasks.loc[hi_tasks, "C0"]).any():
-            if verbose:
-                print("HI task has C_HI < C_LO")
-            continue
 
         u_LO_generated = task_set.get_utilisation_of_level(0)
         u_HI_generated = task_set.get_utilisation_of_level(1)

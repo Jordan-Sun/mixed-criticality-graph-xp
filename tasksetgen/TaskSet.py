@@ -64,6 +64,6 @@ class TaskSet:
         return self.get_size()
 
     def get_hash(self):
-        hash_cols = ["T", "D", "X", "C0", "C1"]
+        hash_cols = ["T", "D", "X", "C_s", "C0", "C1"]
         data = tuple(self.tasks[hash_cols].values.flatten())
         return hash(data)
