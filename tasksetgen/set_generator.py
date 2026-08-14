@@ -184,7 +184,7 @@ def generate_task_set_with_utilisation(
 
         for i, period, u_S, u_LO, u_HI in zip(range(n_tasks), periods, u_S_tasks, u_LO_tasks, u_HI_tasks):
             wcst = round(period * u_S)
-            wcet_LO = max(1, round(period * u_LO))
+            wcet_LO = round(period * u_LO)
             wcet = [wcet_LO] * 2
             criticality_level = 0
             if i in tasks_HI:
@@ -196,6 +196,12 @@ def generate_task_set_with_utilisation(
             task = Task(offset, period, deadline, criticality_level, wcet, wcst)
 
             task_set.add_task(task)
+
+        hi_tasks = task_set.tasks["X"] == 1
+        if (task_set.tasks.loc[hi_tasks, "C1"] < task_set.tasks.loc[hi_tasks, "C0"]).any():
+            if verbose:
+                print("HI task has C_HI < C_LO")
+            continue
 
         u_LO_generated = task_set.get_utilisation_of_level(0)
         u_HI_generated = task_set.get_utilisation_of_level(1)

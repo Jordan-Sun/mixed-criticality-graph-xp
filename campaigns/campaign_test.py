@@ -270,26 +270,26 @@ def _campaign_schedulability_variant(
 
     base_config = {
         "safe_oracles": [],
-        "unsafe_oracles": ["hi-over-demand"],
-        # "unsafe_oracles": [],
+        # "unsafe_oracles": ["hi-over-demand"],
         "quarter_clairvoyance": quarter_clairvoyance,
     }
 
-    # use_case_suffix = "QC" if quarter_clairvoyance else "NC"
-    use_case_suffix = "QCNO" if quarter_clairvoyance else "NCNO"
+    use_case_suffix = "QC" if quarter_clairvoyance else "NC"
     use_cases = [
         {
             **base_config,
             "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
+            "unsafe_oracles": ["hi-over-demand"],
             "scheduler": scheduler,
             "search_algorithms": ["acbfs"],
         },
-        # {
-        #     **base_config,
-        #     "use_case": f"{scheduler.upper()} (BFS, {use_case_suffix})",
-        #     "scheduler": scheduler,
-        #     "search_algorithms": ["bfs"],
-        # },
+        {
+            **base_config,
+            "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix}NO)",
+            "unsafe_oracles": [],
+            "scheduler": scheduler,
+            "search_algorithms": ["acbfs"],
+        },
     ]
     variables = [
         use_case | other_variables

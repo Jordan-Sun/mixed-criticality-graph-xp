@@ -31,8 +31,10 @@ def test(task_set):
             u_i_LO = task.U0
             u_i_HI = task.U1
 
-            lhs = u_i_HI / (1 - x * C_i_S / C_i_LO)
+            lhs = 0
             rhs = (u_i_LO - C_i_S / T_i) / (1 - x)
+            if C_i_LO > 0 and x * C_i_S / C_i_LO < 1:
+                lhs = u_i_HI / (1 - x * C_i_S / C_i_LO)
             max_term = max(lhs, rhs)
             utilisation_EDFVDSD += max_term
 
