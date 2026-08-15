@@ -76,6 +76,7 @@ def generate_task_set_with_utilisation(
             if verbose:
                 print("all HI tasks")
             continue
+        tasks_LO = [i for i in range(n_tasks) if i not in tasks_HI]
 
         # draw number of HI
         n_HI = len(tasks_HI)
@@ -111,94 +112,125 @@ def generate_task_set_with_utilisation(
                 print(f"u_avg != u_target: {u_avg} != {target_average_utilisation}")
             continue
 
-        if n_HI == 1:
-            u_S_tasks_HI = [u_S]
-        elif target_switching_factor > 0:
+        periods_LO = [periods[i] for i in tasks_LO]
+        u_LO_LO = u_LO - u_HI_LO
+        u_min_tasks_LO = [1 / period for period in periods_LO]
+
+        if sum(u_min_tasks_LO) > u_LO_LO:
+            if verbose:
+                print("U_LO_LO not high enough for unit execution time for each LO task")
+            continue
+
+        if n_LO == 1:
+            u_LO_tasks_LO = [u_LO_LO]
+        elif sum(u_min_tasks_LO) == u_LO_LO:
+            u_LO_tasks_LO = u_min_tasks_LO
+        else:
             try:
-                u_S_tasks_HI = cfsn(n_HI, u_S)
+                u_LO_tasks_LO = cfsn(n_LO, u_LO_LO, lower_constraints=u_min_tasks_LO)
             except ZeroDivisionError:
                 if verbose:
-                    print("ZeroDivisionError in CFSN utilisation in S")
-                continue 
+                    print("ZeroDivisionError in CFSN utilisation in LO")
+                continue
             except Exception as e:
-                print(f"Exception in CFSN utilisation in S: {e}")
+                print(f"Unexpected exception in CFSN utilisation in LO: {e}")
                 exit(1)
-        else:
-            u_S_tasks_HI = [0] * n_HI
 
-        # reconstruct full list to resume normal execution
-        u_S_tasks = [0] * n_tasks
-        u_min_in_LO = [1 / p for p in periods]
-        for task_idx, u_s_task in zip(tasks_HI, u_S_tasks_HI):
-            u_S_tasks[task_idx] = u_s_task
-            u_min_in_LO[task_idx] = u_s_task
+        periods_HI = [periods[i] for i in tasks_HI]
+        u_min_tasks_HI = [1 / period for period in periods_HI]
 
-        # for CFSN, lower bounds must sum to less than max utilisation
-        if sum(u_min_in_LO) > u_LO:
+        if sum(u_min_tasks_HI) > u_HI_LO:
             if verbose:
-                print(f"sum(u_min_in_LO) > u_LO: {sum(u_min_in_LO)} > {u_LO}")
+                print("U_HI_LO not high enough for unit execution time for each HI task")
             continue
 
-        # using CFSN to draw task level utilisation in LO
-        try:
-            u_LO_tasks = cfsn(n_tasks, u_LO, lower_constraints=u_min_in_LO)
-        except ZeroDivisionError:
-            if verbose:
-                print("ZeroDivisionError in CFSN utilisation in LO")
-            continue
-
-        # defining lower and upper bounds only for HI tasks in HI
-        # another workaround for a bug in CFSN that it would fail when lower bound is equal to the upper bound.
-        # generate only the HI entries, then place them back in task order after generation.
-        u_min_in_HI = [u_LO_tasks[i] for i in tasks_HI]
-        u_max_in_HI = [U_MAX] * n_HI
-
-        # for CFSN, lower bounds must sum to less than max utilisation
-        if sum(u_min_in_HI) > u_HI:
-            if verbose:
-                print(f"sum(u_min_in_HI) > u_HI: {sum(u_min_in_HI)} > {u_HI}")
-            continue
-
-        # using CFSN to draw task level utilisation of HI tasks in HI
-        # this is just a workaround for a bug in CFSN when N=1 for HI criticality tasks where it will fail.
         if n_HI == 1:
-            u_HI_tasks_HI = [u_HI]
+            u_LO_tasks_HI = [u_HI_LO]
+        elif sum(u_min_tasks_HI) == u_HI_LO:
+            u_LO_tasks_HI = u_min_tasks_HI
         else:
             try:
-                u_HI_tasks_HI = cfsn(n_HI, total=u_HI, upper_constraints=u_max_in_HI, lower_constraints=u_min_in_HI)
+                u_LO_tasks_HI = cfsn(n_HI, u_HI_LO, lower_constraints=u_min_tasks_HI)
             except ZeroDivisionError:
                 if verbose:
                     print("ZeroDivisionError in CFSN utilisation in HI")
                 continue
             except Exception as e:
-                print(f"Exception in CFSN utilisation in HI: {e}")
-                print(f"n_tasks={n_tasks}, u_HI={u_HI}, u_max_in_HI={u_max_in_HI}, u_min_in_HI={u_min_in_HI}")
+                print(f"Unexpected exception in CFSN utilisation in HI: {e}")
                 exit(1)
 
-        # reconstruct full list to resume normal execution
-        u_HI_tasks = [0] * n_tasks
-        for task_idx, u_hi_task in zip(tasks_HI, u_HI_tasks_HI):
-            u_HI_tasks[task_idx] = u_hi_task
+        if target_switching_factor == 0:
+            u_S_tasks_HI = [0] * n_HI
+        elif target_switching_factor == 1:
+            u_S_tasks_HI = u_LO_tasks_HI
+        elif n_HI == 1:
+            u_S_tasks_HI = [u_S]
+        else:
+            try:
+                u_S_tasks_HI = cfsn(n_HI, u_S, upper_constraints=u_LO_tasks_HI)
+            except ZeroDivisionError:
+                if verbose:
+                    print("ZeroDivisionError in CFSN utilisation in S")
+                continue
+            except Exception as e:
+                print(f"Unexpected exception in CFSN utilisation in S: {e}")
+                exit(1)
+
+        u_max_in_HI = [U_MAX] * n_HI
+        if sum(u_LO_tasks_HI) > u_HI or u_HI > sum(u_max_in_HI):
+            if verbose:
+                print(f"HI-mode constraints do not contain target utilisation: {u_HI}")
+            continue
+
+        if n_HI == 1:
+            u_HI_tasks_HI = [u_HI]
+        elif sum(u_LO_tasks_HI) == u_HI:
+            u_HI_tasks_HI = u_LO_tasks_HI
+        elif sum(u_max_in_HI) == u_HI:
+            u_HI_tasks_HI = u_max_in_HI
+        else:
+            try:
+                u_HI_tasks_HI = cfsn(
+                    n_HI, total=u_HI, upper_constraints=u_max_in_HI, lower_constraints=u_LO_tasks_HI
+                )
+            except ZeroDivisionError:
+                if verbose:
+                    print("ZeroDivisionError in CFSN utilisation in HI")
+                continue
+            except Exception as e:
+                print(f"Unexpected exception in CFSN utilisation in HI: {e}")
+                print(f"n_tasks={n_tasks}, u_HI={u_HI}, u_max_in_HI={u_max_in_HI}, u_min_in_HI={u_LO_tasks_HI}")
+                exit(1)
 
         task_set = TaskSet()
 
-        for i, period, u_S, u_LO, u_HI in zip(range(n_tasks), periods, u_S_tasks, u_LO_tasks, u_HI_tasks):
-            wcst = round(period * u_S)
-            wcet_LO = round(period * u_LO)
-            wcet = [wcet_LO] * 2
-            criticality_level = 0
-            if i in tasks_HI:
-                wcet[1] = round(period * u_HI)
-                criticality_level = 1
+        for period, u_LO_task in zip(periods_LO, u_LO_tasks_LO):
+            wcet_LO = round(period * u_LO_task)
 
-            # verify wcst <= wcet[0] <= wcet[1] <= period
-            if not (wcst <= wcet[0] <= wcet[1] <= period):
-                print(f"C_S={wcst} <= C_LO={wcet[0]} <= C_HI={wcet[1]} <= period={period} not satisfied for task {i}.")
+            if not (0 <= wcet_LO <= period):
+                print(f"C_S=0 <= C_LO={wcet_LO} = C_HI <= period={period} not satisfied.")
                 exit(1)
 
             offset = 0
             deadline = period  # implicit deadline
-            task = Task(offset, period, deadline, criticality_level, wcet, wcst)
+            task = Task(offset, period, deadline, 0, [wcet_LO] * 2, 0)
+
+            task_set.add_task(task)
+
+        for period, u_S_task, u_LO_task, u_HI_task in zip(
+            periods_HI, u_S_tasks_HI, u_LO_tasks_HI, u_HI_tasks_HI
+        ):
+            wcst = round(period * u_S_task)
+            wcet_LO = round(period * u_LO_task)
+            wcet_HI = round(period * u_HI_task)
+
+            if not (wcst <= wcet_LO <= wcet_HI <= period):
+                print(f"C_S={wcst} <= C_LO={wcet_LO} <= C_HI={wcet_HI} <= period={period} not satisfied.")
+                exit(1)
+
+            offset = 0
+            deadline = period  # implicit deadline
+            task = Task(offset, period, deadline, 1, [wcet_LO, wcet_HI], wcst)
 
             task_set.add_task(task)
 
@@ -236,9 +268,10 @@ def generate_task_set_with_utilisation(
         Utilisation of HI tasks = {u_HI}
         -> Average utilisation = {u_avg}
 
-        Loads of tasks for switching = {u_S_tasks}
-        Loads of tasks in mode LO = {u_LO_tasks}
-        Loads of tasks in mode HI = {u_HI_tasks}
+        Loads of LO tasks in mode LO = {u_LO_tasks_LO}
+        Loads of HI tasks for switching = {u_S_tasks_HI}
+        Loads of HI tasks in mode LO = {u_LO_tasks_HI}
+        Loads of HI tasks in mode HI = {u_HI_tasks_HI}
         """
         if verbose:
             print(recap_str)
