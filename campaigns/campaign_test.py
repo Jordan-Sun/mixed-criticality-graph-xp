@@ -252,9 +252,9 @@ def _campaign_schedulability_variant(
     taskset_files = [
         taskset2filename(f, benchmark)
         for f in [
-            "non-clairvoyant",
+            # "non-clairvoyant",
             # "quarter-clairvoyant",
-            # "semi-clairvoyant",
+            "semi-clairvoyant",
         ]
     ]
 
@@ -276,13 +276,13 @@ def _campaign_schedulability_variant(
 
     use_case_suffix = "QC" if quarter_clairvoyance else "NC"
     use_cases = [
-        {
-            **base_config,
-            "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
-            "unsafe_oracles": ["hi-over-demand"],
-            "scheduler": scheduler,
-            "search_algorithms": ["acbfs"],
-        },
+        # {
+        #     **base_config,
+        #     "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
+        #     "unsafe_oracles": ["hi-over-demand"],
+        #     "scheduler": scheduler,
+        #     "search_algorithms": ["acbfs"],
+        # },
         # {
         #     **base_config,
         #     "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix}NO)",
@@ -290,6 +290,13 @@ def _campaign_schedulability_variant(
         #     "scheduler": scheduler,
         #     "search_algorithms": ["acbfs"],
         # },
+        {
+            **base_config,
+            "use_case": f"{scheduler.upper()} (BFS, {use_case_suffix}NO)",
+            "unsafe_oracles": ["hi-over-demand"],
+            "scheduler": scheduler,
+            "search_algorithms": ["bfs"],
+        },
     ]
     variables = [
         use_case | other_variables
@@ -316,9 +323,9 @@ def _campaign_schedulability_variant(
 
 def campaigns_schedulability(timeout_seconds: int):
     use_case_specs = [
-        ("edfvd", False),
+        # ("edfvd", False),
         ("edfvd", True),
-        ("edfvdsd", True),
+        # ("edfvdsd", True),
         # ("lwlf", False),
         # ("lwlf", True),
     ]
@@ -709,7 +716,7 @@ def main() -> None:
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
     # parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=8) # done
-    for campaign in campaigns_schedulability(timeout_seconds=min15):
+    for campaign in campaigns_schedulability(timeout_seconds=min30):
         parallel_runner(campaign=campaign, nb_cpus=24)
     # for campaign in campaigns_chained(timeout_seconds=min15):
     #     parallel_runner(campaign=campaign, nb_cpus=24)
