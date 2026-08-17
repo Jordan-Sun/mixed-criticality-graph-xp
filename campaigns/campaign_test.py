@@ -66,17 +66,19 @@ def taskset2filename(experiment: str, benchmark: MCSBench) -> str:
     period_tasket_filename = period_tasket_filenames[0]
     return period_tasket_filename
 
-
-def campaign_state_space(timeout_seconds: int):
+def _campaign_state_space_variant(
+    timeout_seconds: int,
+    scheduler: str,
+    quarter_clairvoyance: bool,
+):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
 
     taskset_files = [
         taskset2filename(f, benchmark)
         for f in [
-            "statespace-rtss-utilisation",  # we dropped this chart from the paper
-            # "statespace-rtss-period-max",
-            # "statespace-rtss-n-tasks",
-            # "harmonic"
+            # "statespace-non-clairvoyant-n-tasks",
+            "statespace-quarter-clairvoyant-n-tasks",
+            # "statespace-semi-clairvoyant-n-tasks",
         ]
     ]
 
@@ -87,25 +89,22 @@ def campaign_state_space(timeout_seconds: int):
         }
         for tf in taskset_files
         for tp in range(nb_systems(tasksystems_path=tf))
+        # for tp in range(10) # for testing
     ]
 
     base_config = {
-        "scheduler": "edfvd",
         "safe_oracles": [],
+        "unsafe_oracles": ["hi-over-demand"],
+        "quarter_clairvoyance": quarter_clairvoyance,
     }
 
+    use_case_suffix = "QC" if quarter_clairvoyance else "NC"
     use_cases = [
-        # {
-        #     **base_config,
-        #     "use_case": "ACBFS, no oracle",
-        #     "search_algorithms": ["acbfs"],
-        #     "unsafe_oracles": [],
-        # },
-        { # as the utilisation based chart was dropped, HI over demand is useless because U = 50% which is always schedulable
+        {
             **base_config,
-            "use_case": "ACBFS, oracles",
+            "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
+            "scheduler": scheduler,
             "search_algorithms": ["acbfs"],
-            "unsafe_oracles": ["hi-over-demand"],
         },
     ]
     variables = [
@@ -114,8 +113,9 @@ def campaign_state_space(timeout_seconds: int):
         for other_variables in varying_variables
     ]
 
+    campaign_name = f"mcs_statespace_{scheduler}_{'qc' if quarter_clairvoyance else 'nc'}"
     campaign01 = CampaignIterateVariables(
-        name="mcs_scale01",
+        name=campaign_name,
         benchmark=benchmark,
         nb_runs=1,
         variables=variables,
@@ -128,6 +128,23 @@ def campaign_state_space(timeout_seconds: int):
     )
 
     return campaign01
+
+def campaign_state_space(timeout_seconds: int):
+    use_case_specs = [
+        ("edfvd", False),
+        ("edfvd", True),
+        ("edfvdsd", True),
+        # ("lwlf", False),
+        # ("lwlf", True),
+    ]
+    return [
+        _campaign_state_space_variant(
+            timeout_seconds=timeout_seconds,
+            scheduler=scheduler,
+            quarter_clairvoyance=quarter_clairvoyance,
+        )
+        for scheduler, quarter_clairvoyance in use_case_specs
+    ]
 
 
 def campaign_state_space_period(timeout_seconds: int):
@@ -252,9 +269,9 @@ def _campaign_schedulability_variant(
     taskset_files = [
         taskset2filename(f, benchmark)
         for f in [
-            # "non-clairvoyant",
-            "quarter-clairvoyant",
-            # "semi-clairvoyant",
+            # "schedulability-non-clairvoyant",
+            "schedulability-quarter-clairvoyant",
+            # "schedulability-semi-clairvoyant",
         ]
     ]
 
@@ -306,14 +323,13 @@ def _campaign_schedulability_variant(
 
     return campaign01
 
-
 def campaigns_schedulability(timeout_seconds: int):
     use_case_specs = [
-        # ("edfvd", False),
-        # ("edfvd", True),
-        # ("edfvdsd", True),
-        ("lwlf", False),
-        ("lwlf", True),
+        ("edfvd", False),
+        ("edfvd", True),
+        ("edfvdsd", True),
+        # ("lwlf", False),
+        # ("lwlf", True),
     ]
     return [
         _campaign_schedulability_variant(
@@ -323,7 +339,6 @@ def campaigns_schedulability(timeout_seconds: int):
         )
         for scheduler, quarter_clairvoyance in use_case_specs
     ]
-
 
 def _campaign_chained_variant(
     timeout_seconds: int,
@@ -701,9 +716,10 @@ def main() -> None:
     min15 = 60*15
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
-    # parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=8) # done
-    for campaign in campaigns_schedulability(timeout_seconds=min30):
-        parallel_runner(campaign=campaign, nb_cpus=24)
+    for campaign in campaign_state_space(timeout_seconds=min30):
+        parallel_runner(campaign=campaign, nb_cpus=1)
+    # for campaign in campaigns_schedulability(timeout_seconds=min30):
+    #     parallel_runner(campaign=campaign, nb_cpus=24)
     # for campaign in campaigns_chained(timeout_seconds=min15):
     #     parallel_runner(campaign=campaign, nb_cpus=24)
     # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)

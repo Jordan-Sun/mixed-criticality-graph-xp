@@ -235,6 +235,54 @@ generate-set-statespace-rtss-n-tasks: $(VENV)
 	--sets_per_config 50 \
 	--seed 123
 
+generate-set-statespace-non-clairvoyant-n-tasks: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-n-tasks.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-n-tasks.csv \
+	--target_switching_factor 1 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--max_period_list 30 \
+	--n_tasks_start 2 \
+	--n_tasks_stop 10 \
+	--n_tasks_step 1 \
+	--sets_per_config 50 \
+	--seed 123
+
+generate-set-statespace-quarter-clairvoyant-n-tasks: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-n-tasks.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-n-tasks.csv \
+	--target_switching_factor 0.1 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--max_period_list 30 \
+	--n_tasks_start 2 \
+	--n_tasks_stop 10 \
+	--n_tasks_step 1 \
+	--sets_per_config 50 \
+	--seed 123
+
+generate-set-statespace-semi-clairvoyant-n-tasks: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-n-tasks.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-n-tasks.csv \
+	--target_switching_factor 0 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--max_period_list 30 \
+	--n_tasks_start 2 \
+	--n_tasks_stop 10 \
+	--n_tasks_step 1 \
+	--sets_per_config 50 \
+	--seed 123
+
 generate-set-statespace-rtss-period-max: $(VENV)
 	$(VENV_PYTHON) $(GENERATOR_EXP) \
 	-t modular \
@@ -278,7 +326,7 @@ generate-set-scheduling-rtss: $(VENV)
 	--sets_per_config 1000 \
 	--seed 4
 
-generate-set-non-clairvoyant: $(VENV)
+generate-set-scheduling-non-clairvoyant: $(VENV)
 	$(VENV_PYTHON) $(GENERATOR_EXP) \
 	-t modular \
 	-o $(OUTPUT_DIR)/$(DT)-non-clairvoyant.txt \
@@ -294,7 +342,7 @@ generate-set-non-clairvoyant: $(VENV)
 	--sets_per_config 1000 \
 	--seed 4
 
-generate-set-quarter-clairvoyant: $(VENV)
+generate-set-scheduling-quarter-clairvoyant: $(VENV)
 	$(VENV_PYTHON) $(GENERATOR_EXP) \
 	-t modular \
 	-o $(OUTPUT_DIR)/$(DT)-quarter-clairvoyant.txt \
@@ -310,8 +358,7 @@ generate-set-quarter-clairvoyant: $(VENV)
 	--sets_per_config 1000 \
 	--seed 4
 
-
-generate-set-semi-clairvoyant: $(VENV)
+generate-set-scheduling-semi-clairvoyant: $(VENV)
 	$(VENV_PYTHON) $(GENERATOR_EXP) \
 	-t modular \
 	-o $(OUTPUT_DIR)/$(DT)-semi-clairvoyant.txt \
