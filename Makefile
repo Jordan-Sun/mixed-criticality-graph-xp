@@ -296,6 +296,48 @@ generate-set-statespace-rtss-period-max: $(VENV)
 	--sets_per_config 50 \
 	--seed 268
 
+generate-set-statespace-non-clairvoyant-period-max: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-period-max.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-period-max.csv \
+	--target_switching_factor 1 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--n_tasks_list 5 \
+	--max_period_list 50 100 150 200 250 300 350 400 \
+	--sets_per_config 50 \
+	--seed 268
+
+generate-set-statespace-quarter-clairvoyant-period-max: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-period-max.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-period-max.csv \
+	--target_switching_factor 0.1 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--n_tasks_list 5 \
+	--max_period_list 50 100 150 200 250 300 350 400 \
+	--sets_per_config 50 \
+	--seed 268
+
+generate-set-statespace-semi-clairvoyant-period-max: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-period-max.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-period-max.csv \
+	--target_switching_factor 0 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--n_tasks_list 5 \
+	--max_period_list 50 100 150 200 250 300 350 400 \
+	--sets_per_config 50 \
+	--seed 268
+
 generate-set-statespace-rtss-utilisation: $(VENV)
 	$(VENV_PYTHON) $(GENERATOR_EXP) \
 	-t modular \

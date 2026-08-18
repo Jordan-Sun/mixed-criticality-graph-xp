@@ -77,8 +77,11 @@ def _campaign_state_space_variant(
         taskset2filename(f, benchmark)
         for f in [
             # "statespace-non-clairvoyant-n-tasks",
-            "statespace-quarter-clairvoyant-n-tasks",
+            # "statespace-quarter-clairvoyant-n-tasks",
             # "statespace-semi-clairvoyant-n-tasks",
+            # "statespace-non-clairvoyant-period-max",
+            "statespace-quarter-clairvoyant-period-max",
+            # "statespace-semi-clairvoyant-period-max"
         ]
     ]
 
@@ -131,8 +134,8 @@ def _campaign_state_space_variant(
 
 def campaign_state_space(timeout_seconds: int):
     use_case_specs = [
-        ("edfvd", False),
-        ("edfvd", True),
+        # ("edfvd", False),
+        # ("edfvd", True),
         ("edfvdsd", True),
         # ("lwlf", False),
         # ("lwlf", True),
@@ -717,7 +720,7 @@ def main() -> None:
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
     for campaign in campaign_state_space(timeout_seconds=min30):
-        parallel_runner(campaign=campaign, nb_cpus=1)
+        parallel_runner(campaign=campaign, nb_cpus=2)
     # for campaign in campaigns_schedulability(timeout_seconds=min30):
     #     parallel_runner(campaign=campaign, nb_cpus=24)
     # for campaign in campaigns_chained(timeout_seconds=min15):
