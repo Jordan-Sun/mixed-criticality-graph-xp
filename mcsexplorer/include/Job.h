@@ -68,7 +68,7 @@ class Job {
     void terminate();
     // release the job under criticality crit
     void request(int crit);
-    void critic(int current_crit, int next_crit, bool is_triggering);
+    void critic(int current_crit, int next_crit, bool is_triggering, bool quarter_clairvoyance);
 
     float get_utilisation_at_level(int at_level) const { return utilisation[at_level - 1]; };
 

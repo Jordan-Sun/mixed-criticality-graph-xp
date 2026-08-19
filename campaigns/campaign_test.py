@@ -331,8 +331,8 @@ def campaigns_schedulability(timeout_seconds: int):
         ("edfvd", False),
         ("edfvd", True),
         ("edfvdsd", True),
-        # ("lwlf", False),
-        # ("lwlf", True),
+        ("lwlf", False),
+        ("lwlf", True),
     ]
     return [
         _campaign_schedulability_variant(
@@ -719,10 +719,10 @@ def main() -> None:
     min15 = 60*15
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
-    for campaign in campaign_state_space(timeout_seconds=min30):
-        parallel_runner(campaign=campaign, nb_cpus=2)
-    # for campaign in campaigns_schedulability(timeout_seconds=min30):
-    #     parallel_runner(campaign=campaign, nb_cpus=24)
+    # for campaign in campaign_state_space(timeout_seconds=min30):
+    #     parallel_runner(campaign=campaign, nb_cpus=2)
+    for campaign in campaigns_schedulability(timeout_seconds=min15):
+        parallel_runner(campaign=campaign, nb_cpus=24)
     # for campaign in campaigns_chained(timeout_seconds=min15):
     #     parallel_runner(campaign=campaign, nb_cpus=24)
     # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)

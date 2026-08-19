@@ -38,14 +38,14 @@ void Job::request(int crit) {
     nat = T;
 }
 
-void Job::critic(int current_crit, int next_crit, bool is_triggering) {
+void Job::critic(int current_crit, int next_crit, bool is_triggering, bool quarter_clairvoyance) {
     if (current_crit == next_crit) {
         return;
     }
     if (X < next_crit) {
         terminate();
     } else {
-        if (is_active() or is_triggering) {
+        if (is_triggering or (is_active() and (not quarter_clairvoyance or get_rst(int2crit(current_crit)) > 0))) {
             rct = rct + C[next_crit - 1] - C[current_crit - 1];
         }
     }

@@ -96,7 +96,7 @@ void State::hi_checkpoint_transition(std::vector<int> const& requestings, bool s
             size_t req_idx = 0;
             for (int i = 0; i < n; ++i) {
                 const bool is_req = (req_idx < requestings.size()) && (i == requestings[req_idx]);
-                jobs[i]->critic(crit, crit + 1, is_req);
+                jobs[i]->critic(crit, crit + 1, is_req, true);
                 if (is_req) ++req_idx;
             }
             crit = HI;
@@ -108,7 +108,7 @@ void State::to_run_checkpoint_transition(int to_run_index = -1, bool signals_mod
     if (signals_mode_switch and crit == LO and to_run_index > -1 and jobs[to_run_index]->get_rst(crit) > 0) {
         const int n = jobs.size();
         for (int i = 0; i < n; ++i) {
-            jobs[i]->critic(crit, crit + 1, i == to_run_index);
+            jobs[i]->critic(crit, crit + 1, i == to_run_index, true);
         }
         crit = HI;
     }
@@ -129,7 +129,7 @@ void State::completion_transition(int ran_index = -1, bool signals_completion = 
     } else if (jobs[ran_index]->get_rct() == 0) {
         const int n = jobs.size();
         for (int i = 0; i < n; ++i) {
-            jobs[i]->critic(crit, crit + 1, i == ran_index);
+            jobs[i]->critic(crit, crit + 1, i == ran_index, false);
         }
         crit = HI;
     }
