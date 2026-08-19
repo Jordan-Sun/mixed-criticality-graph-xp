@@ -273,8 +273,8 @@ def _campaign_schedulability_variant(
         taskset2filename(f, benchmark)
         for f in [
             # "schedulability-non-clairvoyant",
-            "schedulability-quarter-clairvoyant",
-            # "schedulability-semi-clairvoyant",
+            # "schedulability-quarter-clairvoyant",
+            "schedulability-semi-clairvoyant",
         ]
     ]
 
@@ -336,6 +336,66 @@ def campaigns_schedulability(timeout_seconds: int):
     ]
     return [
         _campaign_schedulability_variant(
+            timeout_seconds=timeout_seconds,
+            scheduler=scheduler,
+            quarter_clairvoyance=quarter_clairvoyance,
+        )
+        for scheduler, quarter_clairvoyance in use_case_specs
+    ]
+
+
+def _campaign_switching_factor_variant(
+    timeout_seconds: int,
+    scheduler: str,
+    quarter_clairvoyance: bool,
+):
+    benchmark = MCSBench(timeout_seconds=timeout_seconds)
+    taskset_file = taskset2filename("schedulability-switching-factor", benchmark)
+
+    varying_variables = [
+        {
+            "taskset_file": taskset_file,
+            "taskset_position": taskset_position,
+        }
+        for taskset_position in range(nb_systems(tasksystems_path=taskset_file))
+    ]
+
+    use_case_suffix = "QC" if quarter_clairvoyance else "NC"
+    use_case = {
+        "safe_oracles": [],
+        "unsafe_oracles": ["hi-over-demand"],
+        "quarter_clairvoyance": quarter_clairvoyance,
+        "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
+        "scheduler": scheduler,
+        "search_algorithms": ["acbfs"],
+    }
+    variables = [use_case | other_variables for other_variables in varying_variables]
+
+    campaign_name = f"mcs_switching_factor_{scheduler}_{'qc' if quarter_clairvoyance else 'nc'}"
+    return CampaignIterateVariables(
+        name=campaign_name,
+        benchmark=benchmark,
+        nb_runs=1,
+        variables=variables,
+        constants={},
+        debug=False,
+        gdb=False,
+        enable_data_dir=True,
+        continuing=False,
+        benchmark_duration_seconds=None,
+    )
+
+
+def campaigns_switching_factor(timeout_seconds: int):
+    use_case_specs = [
+        # ("edfvd", False),
+        # ("edfvd", True),
+        ("edfvdsd", True),
+        # ("lwlf", False),
+        # ("lwlf", True),
+    ]
+    return [
+        _campaign_switching_factor_variant(
             timeout_seconds=timeout_seconds,
             scheduler=scheduler,
             quarter_clairvoyance=quarter_clairvoyance,
@@ -721,7 +781,9 @@ def main() -> None:
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
     # for campaign in campaign_state_space(timeout_seconds=min30):
     #     parallel_runner(campaign=campaign, nb_cpus=2)
-    for campaign in campaigns_schedulability(timeout_seconds=min15):
+    # for campaign in campaigns_schedulability(timeout_seconds=min15):
+    #     parallel_runner(campaign=campaign, nb_cpus=24)
+    for campaign in campaigns_switching_factor(timeout_seconds=min15):
         parallel_runner(campaign=campaign, nb_cpus=24)
     # for campaign in campaigns_chained(timeout_seconds=min15):
     #     parallel_runner(campaign=campaign, nb_cpus=24)

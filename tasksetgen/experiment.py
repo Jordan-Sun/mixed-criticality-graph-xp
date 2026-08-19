@@ -157,7 +157,6 @@ def generate_modular(
     task_sets_output=None,
     header_output=None,
     probability_of_HI=0.5,
-    target_switching_factor=1,
     min_period=5,
     max_period_start=50,
     max_period_stop=61,
@@ -171,6 +170,10 @@ def generate_modular(
     utilisation_stop=99,
     utilisation_step=1,
     utilisation_list=None,
+    target_switching_factor_start=100,
+    target_switching_factor_stop=110,
+    target_switching_factor_step=10,
+    target_switching_factor_list=None,
     sets_per_config=100,
     drop_edfvd_suff=False,
 ):
@@ -193,54 +196,70 @@ def generate_modular(
     if utilisation_list is None:
         utilisation_list = range(utilisation_start, utilisation_stop, utilisation_step)
 
-    total_sets = len(n_tasks_list) * len(max_period_list) * len(utilisation_list) * sets_per_config
+    if target_switching_factor_list is None:
+        target_switching_factor_list = range(target_switching_factor_start, target_switching_factor_stop, target_switching_factor_step)
+
+    total_sets = (
+        len(n_tasks_list)
+        * len(max_period_list)
+        * len(utilisation_list)
+        * len(target_switching_factor_list)
+        * sets_per_config
+    )
 
     with tqdm(total=total_sets) as pbar:
-        for n_tasks in n_tasks_list:
-            for max_period in max_period_list:
-                for u in utilisation_list:
-                    u = u / 100
-                    pbar.set_description(f"N={n_tasks} T={max_period} U={u*100:.0f}%")
-                    generated_task_sets = set()
-                    for _ in range(sets_per_config):
-                        while True:
-                            task_set = generate_task_set_with_utilisation(
-                                n_tasks=n_tasks,
-                                target_average_utilisation=u,
-                                target_switching_factor=target_switching_factor,
-                                max_period=max_period,
-                                probability_of_HI=probability_of_HI,
-                                min_period=min_period,
+        for switching_factor in target_switching_factor_list:
+            switching_factor = switching_factor / 100
+            for n_tasks in n_tasks_list:
+                for max_period in max_period_list:
+                    for u in utilisation_list:
+                        u = u / 100
+                        pbar.set_description(
+                            f"S={switching_factor:.1f} N={n_tasks} T={max_period} U={u*100:.0f}%"
+                        )
+                        generated_task_sets = set()
+                        for _ in range(sets_per_config):
+                            while True:
+                                task_set = generate_task_set_with_utilisation(
+                                    n_tasks=n_tasks,
+                                    target_average_utilisation=u,
+                                    target_switching_factor=switching_factor,
+                                    max_period=max_period,
+                                    probability_of_HI=probability_of_HI,
+                                    min_period=min_period,
+                                )
+
+                                edfvd_suff = test_edfvd(task_set)
+                                if drop_edfvd_suff and edfvd_suff:
+                                    continue
+
+                                task_set_hash = task_set.get_hash()
+                                if task_set_hash not in generated_task_sets:
+                                    generated_task_sets.add(task_set_hash)
+                                    break
+
+                            task_sets_definition += get_task_set_definition(task_set)
+
+                            task_set_info = pd.Series(dtype=float)
+                            task_set_info["ts_id"] = task_set_id
+                            task_set_info["target_switching_factor"] = switching_factor
+                            task_set_info["U"] = u
+                            task_set_info["Uv"] = task_set.get_average_utilisation()
+                            task_set_info["nbt"] = len(task_set)
+                            task_set_info["EDFVD_test"] = int(edfvd_suff)
+                            task_set_info["EDFVD_test_new"] = int(test_edfvd_new(task_set))
+                            task_set_info["EDFVDSD_test"] = int(test_edfvdsd(task_set))
+                            task_set_info["OPT_SEMI_test"] = int(test_opt_semi(task_set))
+                            task_set_info["probability_of_HI"] = probability_of_HI
+                            task_set_info["min_period"] = min_period
+                            task_set_info["max_period"] = max_period
+
+                            task_sets_header = pd.concat(
+                                [task_sets_header, task_set_info.to_frame().T], ignore_index=True
                             )
 
-                            edfvd_suff = test_edfvd(task_set)
-                            if drop_edfvd_suff and edfvd_suff:
-                                continue
-
-                            task_set_hash = task_set.get_hash()
-                            if task_set_hash not in generated_task_sets:
-                                generated_task_sets.add(task_set_hash)
-                                break
-
-                        task_sets_definition += get_task_set_definition(task_set)
-
-                        task_set_info = pd.Series(dtype=float)
-                        task_set_info["ts_id"] = task_set_id
-                        task_set_info["U"] = u
-                        task_set_info["Uv"] = task_set.get_average_utilisation()
-                        task_set_info["nbt"] = len(task_set)
-                        task_set_info["EDFVD_test"] = int(edfvd_suff)
-                        task_set_info["EDFVD_test_new"] = int(test_edfvd_new(task_set))
-                        task_set_info["EDFVDSD_test"] = int(test_edfvdsd(task_set))
-                        task_set_info["OPT_SEMI_test"] = int(test_opt_semi(task_set))
-                        task_set_info["probability_of_HI"] = probability_of_HI
-                        task_set_info["min_period"] = min_period
-                        task_set_info["max_period"] = max_period
-
-                        task_sets_header = pd.concat([task_sets_header, task_set_info.to_frame().T], ignore_index=True)
-
-                        task_set_id += 1
-                        pbar.update(1)
+                            task_set_id += 1
+                            pbar.update(1)
 
     task_sets_definition = f"{task_set_id}\n" + task_sets_definition
 
@@ -424,15 +443,18 @@ def read_args():
         nargs="+",
         required=False,
     )
+    parser.add_argument("--target_switching_factor_start", type=int, required=False)
+    parser.add_argument("--target_switching_factor_stop", type=int, required=False)
+    parser.add_argument("--target_switching_factor_step", type=int, required=False)
     parser.add_argument(
-        "--drop_edfvd_suff",
-        type=bool,
+        "--target_switching_factor_list",
+        type=int,
+        nargs="+",
         required=False,
     )
     parser.add_argument(
-        "-tsf",
-        "--target_switching_factor",
-        type=float,
+        "--drop_edfvd_suff",
+        type=bool,
         required=False,
     )
 
@@ -476,7 +498,6 @@ if __name__ == "__main__":
             task_sets_output=args.task_sets_output,
             header_output=args.header_output,
             probability_of_HI=args.probability_of_HI,
-            target_switching_factor=args.target_switching_factor,
             min_period=args.minimum_period,
             max_period_start=args.max_period_start,
             max_period_stop=args.max_period_stop,
@@ -490,6 +511,10 @@ if __name__ == "__main__":
             utilisation_stop=args.utilisation_stop,
             utilisation_step=args.utilisation_step,
             utilisation_list=args.utilisation_list,
+            target_switching_factor_start=args.target_switching_factor_start,
+            target_switching_factor_stop=args.target_switching_factor_stop,
+            target_switching_factor_step=args.target_switching_factor_step,
+            target_switching_factor_list=args.target_switching_factor_list,
             sets_per_config=args.sets_per_config,
             drop_edfvd_suff=args.drop_edfvd_suff,
         )
