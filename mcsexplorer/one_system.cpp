@@ -24,6 +24,7 @@ struct {
     std::vector<std::string> search_algorithms;
     std::vector<std::string> safe_oracles;
     std::vector<std::string> unsafe_oracles;
+    bool quarter_clairvoyance = false;
     int log_level = -1;
 } CONFIG;
 
@@ -38,7 +39,7 @@ State* read_task_set(std::string const& input_path, int offset = 0) {
 
     int t;  // n test cases
     int n;  // n tasks in test case
-    int T, D, X, c1, c2;
+    int T, D, X, c1, c2, cs;
     std::vector<Job*> jobs;
     int end;
 
@@ -50,9 +51,9 @@ State* read_task_set(std::string const& input_path, int offset = 0) {
         input_file >> n;
         for (int j = 0; j < n; j++) {
             input_file >> T >> D >> X;
-            input_file >> c1 >> c2;
+            input_file >> c1 >> c2 >> cs;
             if (i >= offset) {
-                Job* job = new Job(T, D, int2crit(X), std::vector<int>{c1, c2});
+                Job* job = new Job(T, D, int2crit(X), std::vector<int>{c1, c2}, cs);
                 jobs.push_back(job);
             }
         }
@@ -132,6 +133,9 @@ void parse_args(int argc, char** argv) {
                 CONFIG.unsafe_oracles.push_back(token);
             }
             i++;
+        } else if ("--quarter-clairvoyance" == argument) {
+            CONFIG.quarter_clairvoyance = true;
+            i++;
         } else if ("--log-level" == argument) {
             i++;
             const std::string log_level_str = argv[i];
@@ -174,6 +178,8 @@ int main(int argc, char** argv) {
         std::cout << oracle << " ";
     }
     std::cout << std::endl;
+    std::cout << "  quarter clairvoyance: " << (CONFIG.quarter_clairvoyance ? "True" : "False") << std::endl;
+    std::cout << std::endl;
     std::cout << "  log level: " << CONFIG.log_level << std::endl;
 
     State* start_state = read_task_set(CONFIG.inputfile_path, CONFIG.taskset_position);
@@ -181,6 +187,8 @@ int main(int argc, char** argv) {
     std::function<int(State*)> scheduler;
     if ("edfvd" == CONFIG.scheduler) {
         scheduler = Scheduler::edfvd;
+    } else if ("edfvdsd" == CONFIG.scheduler) {
+        scheduler = Scheduler::edfvdsd;
     } else if ("lwlf" == CONFIG.scheduler) {
         scheduler = Scheduler::lwlf;
     } else {
@@ -235,7 +243,7 @@ int main(int argc, char** argv) {
         algorithms.push_back(from_name(algorithm_name));
     }
 
-    std::vector<Result> results = graph.search(algorithms);
+    std::vector<Result> results = graph.search(algorithms, CONFIG.quarter_clairvoyance);
     std::cout << "Results: ";
     u_int64_t duration_ns = 0;
     for (size_t i = 0; i < results.size(); i++) {

@@ -66,17 +66,22 @@ def taskset2filename(experiment: str, benchmark: MCSBench) -> str:
     period_tasket_filename = period_tasket_filenames[0]
     return period_tasket_filename
 
-
-def campaign_state_space(timeout_seconds: int):
+def _campaign_state_space_variant(
+    timeout_seconds: int,
+    scheduler: str,
+    quarter_clairvoyance: bool,
+):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
 
     taskset_files = [
         taskset2filename(f, benchmark)
         for f in [
-            "statespace-rtss-utilisation",  # we dropped this chart from the paper
-            "statespace-rtss-period-max",
-            "statespace-rtss-n-tasks",
-            # "harmonic"
+            # "statespace-non-clairvoyant-n-tasks",
+            # "statespace-quarter-clairvoyant-n-tasks",
+            # "statespace-semi-clairvoyant-n-tasks",
+            # "statespace-non-clairvoyant-period-max",
+            "statespace-quarter-clairvoyant-period-max",
+            # "statespace-semi-clairvoyant-period-max"
         ]
     ]
 
@@ -87,26 +92,23 @@ def campaign_state_space(timeout_seconds: int):
         }
         for tf in taskset_files
         for tp in range(nb_systems(tasksystems_path=tf))
+        # for tp in range(10) # for testing
     ]
 
     base_config = {
-        "scheduler": "edfvd",
         "safe_oracles": [],
+        "unsafe_oracles": ["hi-over-demand"],
+        "quarter_clairvoyance": quarter_clairvoyance,
     }
 
+    use_case_suffix = "QC" if quarter_clairvoyance else "NC"
     use_cases = [
         {
             **base_config,
-            "use_case": "ACBFS, no oracle",
+            "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
+            "scheduler": scheduler,
             "search_algorithms": ["acbfs"],
-            "unsafe_oracles": [],
         },
-        # { # as the utilisation based chart was dropped, HI over demand is useless because U = 50% which is always schedulable
-        #     **base_config,
-        #     "use_case": "ACBFS, oracles",
-        #     "search_algorithms": ["acbfs"],
-        #     "unsafe_oracles": ["hi-over-demand"],
-        # },
     ]
     variables = [
         use_case | other_variables
@@ -114,8 +116,9 @@ def campaign_state_space(timeout_seconds: int):
         for other_variables in varying_variables
     ]
 
+    campaign_name = f"mcs_statespace_{scheduler}_{'qc' if quarter_clairvoyance else 'nc'}"
     campaign01 = CampaignIterateVariables(
-        name="mcs_scale01",
+        name=campaign_name,
         benchmark=benchmark,
         nb_runs=1,
         variables=variables,
@@ -128,6 +131,23 @@ def campaign_state_space(timeout_seconds: int):
     )
 
     return campaign01
+
+def campaign_state_space(timeout_seconds: int):
+    use_case_specs = [
+        # ("edfvd", False),
+        # ("edfvd", True),
+        ("edfvdsd", True),
+        # ("lwlf", False),
+        # ("lwlf", True),
+    ]
+    return [
+        _campaign_state_space_variant(
+            timeout_seconds=timeout_seconds,
+            scheduler=scheduler,
+            quarter_clairvoyance=quarter_clairvoyance,
+        )
+        for scheduler, quarter_clairvoyance in use_case_specs
+    ]
 
 
 def campaign_state_space_period(timeout_seconds: int):
@@ -242,10 +262,21 @@ def campaign_state_space_bfs(timeout_seconds: int):
 
     return campaign01
 
-def campaign_schedulability(timeout_seconds: int):
+def _campaign_schedulability_variant(
+    timeout_seconds: int,
+    scheduler: str,
+    quarter_clairvoyance: bool,
+):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
 
-    taskset_files = [taskset2filename("scheduling-rtss", benchmark)]
+    taskset_files = [
+        taskset2filename(f, benchmark)
+        for f in [
+            # "schedulability-non-clairvoyant",
+            # "schedulability-quarter-clairvoyant",
+            "schedulability-semi-clairvoyant",
+        ]
+    ]
 
     varying_variables = [
         {
@@ -259,58 +290,19 @@ def campaign_schedulability(timeout_seconds: int):
 
     base_config = {
         "safe_oracles": [],
-        "unsafe_oracles": ["hi-over-demand"],
+        # "unsafe_oracles": ["hi-over-demand"],
+        "quarter_clairvoyance": quarter_clairvoyance,
     }
 
+    use_case_suffix = "QC" if quarter_clairvoyance else "NC"
     use_cases = [
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (PBFS)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["pbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (ACBFS)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["acbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (PACBFS)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["pacbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (PDFS)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["pdfs"],
-        # },
         {
             **base_config,
-            "use_case": "LWLF (PBFS)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["pbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "LWLF (ACBFS)",
-            "scheduler": "lwlf",
+            "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
+            "unsafe_oracles": ["hi-over-demand"],
+            "scheduler": scheduler,
             "search_algorithms": ["acbfs"],
         },
-        {
-            **base_config,
-            "use_case": "LWLF (PACBFS)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["pacbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "LWLF (PDFS)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["pdfs"],
-        },
     ]
     variables = [
         use_case | other_variables
@@ -318,9 +310,10 @@ def campaign_schedulability(timeout_seconds: int):
         for other_variables in varying_variables
     ]
 
+    campaign_name = f"mcs_schedulability_{scheduler}_{'qc' if quarter_clairvoyance else 'nc'}"
     campaign01 = CampaignIterateVariables(
-        name="mcs_schedulability",
-        benchmark=MCSBench(timeout_seconds=timeout_seconds),
+        name=campaign_name,
+        benchmark=benchmark,
         nb_runs=1,
         variables=variables,
         constants={},
@@ -333,10 +326,98 @@ def campaign_schedulability(timeout_seconds: int):
 
     return campaign01
 
-def campaign_chained(timeout_seconds: int):
+def campaigns_schedulability(timeout_seconds: int):
+    use_case_specs = [
+        ("edfvd", False),
+        ("edfvd", True),
+        ("edfvdsd", True),
+        ("lwlf", False),
+        ("lwlf", True),
+    ]
+    return [
+        _campaign_schedulability_variant(
+            timeout_seconds=timeout_seconds,
+            scheduler=scheduler,
+            quarter_clairvoyance=quarter_clairvoyance,
+        )
+        for scheduler, quarter_clairvoyance in use_case_specs
+    ]
+
+
+def _campaign_switching_factor_variant(
+    timeout_seconds: int,
+    scheduler: str,
+    quarter_clairvoyance: bool,
+):
+    benchmark = MCSBench(timeout_seconds=timeout_seconds)
+    taskset_file = taskset2filename("schedulability-switching-factor", benchmark)
+
+    varying_variables = [
+        {
+            "taskset_file": taskset_file,
+            "taskset_position": taskset_position,
+        }
+        for taskset_position in range(nb_systems(tasksystems_path=taskset_file))
+    ]
+
+    use_case_suffix = "QC" if quarter_clairvoyance else "NC"
+    use_case = {
+        "safe_oracles": [],
+        "unsafe_oracles": ["hi-over-demand"],
+        "quarter_clairvoyance": quarter_clairvoyance,
+        "use_case": f"{scheduler.upper()} (ACBFS, {use_case_suffix})",
+        "scheduler": scheduler,
+        "search_algorithms": ["acbfs"],
+    }
+    variables = [use_case | other_variables for other_variables in varying_variables]
+
+    campaign_name = f"mcs_switching_factor_{scheduler}_{'qc' if quarter_clairvoyance else 'nc'}"
+    return CampaignIterateVariables(
+        name=campaign_name,
+        benchmark=benchmark,
+        nb_runs=1,
+        variables=variables,
+        constants={},
+        debug=False,
+        gdb=False,
+        enable_data_dir=True,
+        continuing=False,
+        benchmark_duration_seconds=None,
+    )
+
+
+def campaigns_switching_factor(timeout_seconds: int):
+    use_case_specs = [
+        # ("edfvd", False),
+        # ("edfvd", True),
+        ("edfvdsd", True),
+        # ("lwlf", False),
+        # ("lwlf", True),
+    ]
+    return [
+        _campaign_switching_factor_variant(
+            timeout_seconds=timeout_seconds,
+            scheduler=scheduler,
+            quarter_clairvoyance=quarter_clairvoyance,
+        )
+        for scheduler, quarter_clairvoyance in use_case_specs
+    ]
+
+def _campaign_chained_variant(
+    timeout_seconds: int,
+    scheduler: str,
+    use_case_name: str,
+    search_algorithms: list[str],
+):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
 
-    taskset_files = [taskset2filename("scheduling-rtss", benchmark)]
+    taskset_files = [
+        taskset2filename(f, benchmark)
+        for f in [
+            # "non-clairvoyant",
+            "quarter-clairvoyant",
+        ]
+    ]
 
     varying_variables = [
         {
@@ -351,56 +432,15 @@ def campaign_chained(timeout_seconds: int):
     base_config = {
         "safe_oracles": [],
         "unsafe_oracles": ["hi-over-demand"],
+        "quarter_clairvoyance": True,
     }
 
     use_cases = [
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (AC)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["none", "none", "acbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (PAC-AC)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["none", "pacbfs", "acbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (P-AC)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["none", "pbfs", "acbfs"],
-        # },
-        # {
-        #     **base_config,
-        #     "use_case": "EDF-VD (PAC-P-AC)",
-        #     "scheduler": "edfvd",
-        #     "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
-        # },
         {
             **base_config,
-            "use_case": "LWLF (AC)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["none", "none", "acbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "LWLF (PAC-AC)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["none", "pacbfs", "acbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "LWLF (P-AC)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["none", "pbfs", "acbfs"],
-        },
-        {
-            **base_config,
-            "use_case": "LWLF (PAC-P-AC)",
-            "scheduler": "lwlf",
-            "search_algorithms": ["pacbfs", "pbfs", "acbfs"],
+            "use_case": f"{scheduler.upper()} ({use_case_name})",
+            "scheduler": scheduler,
+            "search_algorithms": search_algorithms,
         },
     ]
     variables = [
@@ -409,9 +449,10 @@ def campaign_chained(timeout_seconds: int):
         for other_variables in varying_variables
     ]
 
+    campaign_name = f"mcs_schedulability_{scheduler}_{use_case_name.lower().replace('-', '_')}"
     campaign01 = CampaignIterateVariables(
-        name="mcs_schedulability",
-        benchmark=MCSBench(timeout_seconds=timeout_seconds),
+        name=campaign_name,
+        benchmark=benchmark,
         nb_runs=1,
         variables=variables,
         constants={},
@@ -423,6 +464,26 @@ def campaign_chained(timeout_seconds: int):
     )
 
     return campaign01
+
+
+def campaigns_chained(timeout_seconds: int):
+    use_case_specs = [
+        ("AC", ["none", "none", "acbfs"]),
+        ("PAC-AC", ["none", "pacbfs", "acbfs"]),
+        ("P-AC", ["none", "pbfs", "acbfs"]),
+        ("PAC-P-AC", ["pacbfs", "pbfs", "acbfs"]),
+    ]
+    return [
+        _campaign_chained_variant(
+            timeout_seconds=timeout_seconds,
+            scheduler=scheduler,
+            use_case_name=use_case_name,
+            search_algorithms=search_algorithms,
+        )
+        # for scheduler in ["edfvd", "edfvdsd", "lwlf"]
+        for scheduler in ["edfvdsd"]
+        for use_case_name, search_algorithms in use_case_specs
+    ]
 
 def campaign_oracles(timeout_seconds: int):
     benchmark = MCSBench(timeout_seconds=timeout_seconds)
@@ -718,9 +779,14 @@ def main() -> None:
     min15 = 60*15
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
-    # parallel_runner(campaign=campaign_state_space(timeout_seconds=min15), nb_cpus=8) # done
-    # parallel_runner(campaign=campaign_schedulability(timeout_seconds=min15), nb_cpus=32)
-    parallel_runner(campaign=campaign_chained(timeout_seconds=min15), nb_cpus=16)
+    # for campaign in campaign_state_space(timeout_seconds=min30):
+    #     parallel_runner(campaign=campaign, nb_cpus=2)
+    # for campaign in campaigns_schedulability(timeout_seconds=min15):
+    #     parallel_runner(campaign=campaign, nb_cpus=24)
+    for campaign in campaigns_switching_factor(timeout_seconds=min15):
+        parallel_runner(campaign=campaign, nb_cpus=24)
+    # for campaign in campaigns_chained(timeout_seconds=min15):
+    #     parallel_runner(campaign=campaign, nb_cpus=24)
     # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)
     # parallel_runner(campaign=campaign_compression_table(timeout_seconds=min15), nb_cpus=128)
 

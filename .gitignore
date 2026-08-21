@@ -18,3 +18,5 @@ outputs/*.txt
 */results/*
 *.png
 *.pdf
+*.eps
+*/archive/*

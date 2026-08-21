@@ -45,9 +45,19 @@ std::vector<size_t> State::get_implicitly_completeds() const {
     return vect;
 }
 
-std::vector<size_t> State::get_eligibles() {
+std::vector<size_t> State::get_eligibles(CriticalityFilter filter) {
     std::vector<size_t> vect;
     for (size_t i = 0; i < jobs.size(); ++i) {
+        switch (filter) {
+            case LO_ONLY:
+                if (jobs[i]->get_X() != LO) continue;
+                break;
+            case HI_ONLY:
+                if (jobs[i]->get_X() != HI) continue;
+                break;
+            case ALL:
+                break;
+        }
         if (jobs[i]->is_eligible(crit)) {
             vect.push_back(i);
         }
@@ -72,6 +82,38 @@ bool State::is_fail() const {
     return false;
 }
 
+void State::request_transition(std::vector<int> const& requestings) {
+    for (int i : requestings) {
+        jobs[i]->request(crit);
+    }
+}
+
+void State::hi_checkpoint_transition(std::vector<int> const& requestings, bool signals_mode_switch = false) {
+    if (signals_mode_switch and crit == LO) {
+        const bool can_trigger = std::ranges::any_of(requestings, [&](int i) { return jobs[i]->get_rst(crit) == 0; });
+        if (can_trigger) {
+            const int n = jobs.size();
+            size_t req_idx = 0;
+            for (int i = 0; i < n; ++i) {
+                const bool is_req = (req_idx < requestings.size()) && (i == requestings[req_idx]);
+                jobs[i]->critic(crit, crit + 1, is_req, true);
+                if (is_req) ++req_idx;
+            }
+            crit = HI;
+        }
+    }
+}
+
+void State::to_run_checkpoint_transition(int to_run_index = -1, bool signals_mode_switch = false) {
+    if (signals_mode_switch and crit == LO and to_run_index > -1 and jobs[to_run_index]->get_rst(crit) > 0) {
+        const int n = jobs.size();
+        for (int i = 0; i < n; ++i) {
+            jobs[i]->critic(crit, crit + 1, i == to_run_index, true);
+        }
+        crit = HI;
+    }
+}
+
 void State::run_tansition(int to_run_index = -1) {
     const int n = jobs.size();
     for (int i = 0; i < n; ++i) {
@@ -87,15 +129,17 @@ void State::completion_transition(int ran_index = -1, bool signals_completion = 
     } else if (jobs[ran_index]->get_rct() == 0) {
         const int n = jobs.size();
         for (int i = 0; i < n; ++i) {
-            jobs[i]->critic(crit, crit + 1, i == ran_index);
+            jobs[i]->critic(crit, crit + 1, i == ran_index, false);
         }
         crit = HI;
     }
 }
 
-void State::request_transition(std::vector<int> const& requestings) {
-    for (int i : requestings) {
-        jobs[i]->request(crit);
+void State::qc_completion_transition(int ran_index, bool signals_completion = false) {
+    if (ran_index == -1) return;
+
+    if (jobs[ran_index]->is_implicitly_completed(crit) or signals_completion) {
+        jobs[ran_index]->terminate();
     }
 }
 

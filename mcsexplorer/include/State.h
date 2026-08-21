@@ -8,6 +8,12 @@
 
 #pragma once
 
+enum CriticalityFilter {
+    LO_ONLY = 0b01,
+    HI_ONLY = 0b10,
+    ALL = 0b11,
+};
+
 class State {
    public:
     State() = default;
@@ -19,14 +25,18 @@ class State {
 
     std::vector<size_t> get_actives() const;
     std::vector<size_t> get_implicitly_completeds() const;
-    std::vector<size_t> get_eligibles();
+    std::vector<size_t> get_eligibles(CriticalityFilter filter = ALL);
     std::vector<size_t> get_tasks_of_level(Criticality of_level) const;
 
     bool is_fail() const;
 
+    // HI and LO request transition is the same just different crit level, thus different requestings.
+    void request_transition(std::vector<int> const& requestings);
+    void hi_checkpoint_transition(std::vector<int> const& requestings, bool signals_mode_switch);
+    void to_run_checkpoint_transition(int to_run_index, bool signals_mode_switch);
     void run_tansition(int to_run_index);
     void completion_transition(int ran_index, bool signals_completion);
-    void request_transition(std::vector<int> const& requestings);
+    void qc_completion_transition(int ran_index, bool signals_completion);
 
     size_t n() const { return jobs.size(); }
     Criticality get_crit() const { return crit; };

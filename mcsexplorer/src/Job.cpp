@@ -1,14 +1,21 @@
 #include "Job.h"
 
 void Job::initialize() {
-    nat = 0;
     rct = 0;
+    nat = 0;
 }
 
 float Job::get_ttvd(float discount_factor) const {
     if (X == LO) return (float)get_ttd();
     return 1.0 * nat - (1.0 * T - D * discount_factor);
 };
+
+float Job::get_ttsd(float discount_factor) const {
+    if (X == LO) return (float)get_ttd();
+    if (get_rst(LO) == 0) return get_ttvd(discount_factor);
+    float vd = discount_factor * T;
+    return 1.0 * nat - (1.0 * T - vd * C_s / C[0]);
+}
 
 void Job::execute(bool run) {
     if (run) {
@@ -21,7 +28,9 @@ void Job::execute(bool run) {
     }
 }
 
-void Job::terminate() { rct = 0; }
+void Job::terminate() { 
+    rct = 0;
+}
 
 // release the job under criticality crit
 void Job::request(int crit) {
@@ -29,14 +38,14 @@ void Job::request(int crit) {
     nat = T;
 }
 
-void Job::critic(int current_crit, int next_crit, bool is_triggering) {
+void Job::critic(int current_crit, int next_crit, bool is_triggering, bool quarter_clairvoyance) {
     if (current_crit == next_crit) {
         return;
     }
     if (X < next_crit) {
         terminate();
     } else {
-        if (is_active() or is_triggering) {
+        if (is_triggering or (is_active() and (not quarter_clairvoyance or get_rst(int2crit(current_crit)) > 0))) {
             rct = rct + C[next_crit - 1] - C[current_crit - 1];
         }
     }
@@ -52,7 +61,7 @@ std::string Job::str() const {
 
 std::string Job::str_task() const {
     std::stringstream ss;
-    ss << "T=" << T << ", D=" << D << ", X=" << X << ", C={" << C[0] << ", " << C[1] << "}";
+    ss << "T=" << T << ", D=" << D << ", X=" << X << ", C_s = " << C_s << ", C={" << C[0] << ", " << C[1] << "}";
     return ss.str();
 }
 
@@ -67,13 +76,15 @@ uint64_t Job::get_hash() const {
     uint64_t hash = rct;
     uint64_t factor = C[1] + 1;
 
-    hash += nat * factor;
+    hash += nat * factor * (C_s + 1);
+
     return hash;
 }
 
 uint64_t Job::get_hash_factor() const {
     uint64_t factor = C[1] + 1;
     factor = factor * (T + 1);
+
     return factor;
 }
 
@@ -95,8 +106,10 @@ int Job::get_next_jobs(int t, Criticality alpha) const {
 int Job::get_demand(int t, Criticality alpha, Criticality current_crit) const {
     if (t < get_ttd() or X < alpha) return 0;
 
-    if (rct > 0)
-        return rct + C[alpha - 1] - C[current_crit - 1] + get_next_jobs(t, alpha) * C[alpha - 1];
-    else
+    if (rct == 0)
         return get_next_jobs(t, alpha) * C[alpha - 1];
+    else if (get_rst(current_crit) == 0)
+        return rct + get_next_jobs(t, alpha) * C[alpha - 1];
+    else
+        return rct + C[alpha - 1] - C[current_crit - 1] + get_next_jobs(t, alpha) * C[alpha - 1];
 }

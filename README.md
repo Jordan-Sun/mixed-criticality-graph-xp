@@ -27,3 +27,5 @@ If you find MC Graph explorer useful for your research and applications, please 
   year={2024}
 }
 ```
+
+<!-- run --taskset-file ../outputs/20260524_203153-non-clairvoyant.txt --scheduler edfvdsd --search-algorithms acbfs --unsafe-oracles hi-over-demand --log-level 2 --quarter-clairvoyance  -->

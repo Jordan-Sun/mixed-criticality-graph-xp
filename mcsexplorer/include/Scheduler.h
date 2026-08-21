@@ -10,6 +10,7 @@
 class Scheduler {
    public:
     static int edfvd(State* state);
+    static int edfvdsd(State* state);
     static int lwlf(State* state);
 };
 

@@ -235,11 +235,113 @@ generate-set-statespace-rtss-n-tasks: $(VENV)
 	--sets_per_config 50 \
 	--seed 123
 
+generate-set-statespace-non-clairvoyant-n-tasks: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-n-tasks.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-n-tasks.csv \
+	--target_switching_factor_start 1.0 \
+	--target_switching_factor_stop 1.1 \
+	--target_switching_factor_step 0.1 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--max_period_list 30 \
+	--n_tasks_start 2 \
+	--n_tasks_stop 10 \
+	--n_tasks_step 1 \
+	--sets_per_config 50 \
+	--seed 123
+
+generate-set-statespace-quarter-clairvoyant-n-tasks: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-n-tasks.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-n-tasks.csv \
+	--target_switching_factor_start 0.1 \
+	--target_switching_factor_stop 0.2 \
+	--target_switching_factor_step 0.1 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--max_period_list 30 \
+	--n_tasks_start 2 \
+	--n_tasks_stop 10 \
+	--n_tasks_step 1 \
+	--sets_per_config 50 \
+	--seed 123
+
+generate-set-statespace-semi-clairvoyant-n-tasks: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-n-tasks.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-n-tasks.csv \
+	--target_switching_factor_start 0.0 \
+	--target_switching_factor_stop 0.1 \
+	--target_switching_factor_step 0.1 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--max_period_list 30 \
+	--n_tasks_start 2 \
+	--n_tasks_stop 10 \
+	--n_tasks_step 1 \
+	--sets_per_config 50 \
+	--seed 123
+
 generate-set-statespace-rtss-period-max: $(VENV)
 	$(VENV_PYTHON) $(GENERATOR_EXP) \
 	-t modular \
 	-o $(OUTPUT_DIR)/$(DT)-statespace-rtss-period-max.txt \
 	-c $(OUTPUT_DIR)/$(DT)-statespace-rtss-period-max.csv \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--n_tasks_list 5 \
+	--max_period_list 50 100 150 200 250 300 350 400 \
+	--sets_per_config 50 \
+	--seed 268
+
+generate-set-statespace-non-clairvoyant-period-max: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-period-max.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-period-max.csv \
+	--target_switching_factor_start 100 \
+	--target_switching_factor_stop 110 \
+	--target_switching_factor_step 10 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--n_tasks_list 5 \
+	--max_period_list 50 100 150 200 250 300 350 400 \
+	--sets_per_config 50 \
+	--seed 268
+
+generate-set-statespace-quarter-clairvoyant-period-max: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-period-max.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-period-max.csv \
+	--target_switching_factor_start 10 \
+	--target_switching_factor_stop 20 \
+	--target_switching_factor_step 10 \
+	--probability_of_HI 0.5 \
+	--minimum_period 5 \
+	--utilisation_list 50 \
+	--n_tasks_list 5 \
+	--max_period_list 50 100 150 200 250 300 350 400 \
+	--sets_per_config 50 \
+	--seed 268
+
+generate-set-statespace-semi-clairvoyant-period-max: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-period-max.txt \
+	-c $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-period-max.csv \
+	--target_switching_factor_start 0 \
+	--target_switching_factor_stop 10 \
+	--target_switching_factor_step 10 \
 	--probability_of_HI 0.5 \
 	--minimum_period 5 \
 	--utilisation_list 50 \
@@ -278,7 +380,75 @@ generate-set-scheduling-rtss: $(VENV)
 	--sets_per_config 1000 \
 	--seed 4
 
+generate-set-scheduling-non-clairvoyant: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-non-clairvoyant.txt \
+	-c $(OUTPUT_DIR)/$(DT)-non-clairvoyant.csv \
+	--probability_of_HI 0.5 \
+	--target_switching_factor_start 100 \
+	--target_switching_factor_stop 110 \
+	--target_switching_factor_step 10 \
+	--minimum_period 5 \
+	--max_period_list 30 \
+	--n_tasks_list 5 \
+	--utilisation_start 50 \
+	--utilisation_stop 101 \
+	--utilisation_step 5 \
+	--sets_per_config 1000 \
+	--seed 4
 
+generate-set-scheduling-quarter-clairvoyant: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-quarter-clairvoyant.txt \
+	-c $(OUTPUT_DIR)/$(DT)-quarter-clairvoyant.csv \
+	--probability_of_HI 0.5 \
+	--target_switching_factor_start 10 \
+	--target_switching_factor_stop 20 \
+	--target_switching_factor_step 10 \
+	--minimum_period 5 \
+	--max_period_list 30 \
+	--n_tasks_list 5 \
+	--utilisation_start 50 \
+	--utilisation_stop 101 \
+	--utilisation_step 5 \
+	--sets_per_config 1000 \
+	--seed 4
+
+generate-set-scheduling-semi-clairvoyant: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-semi-clairvoyant.txt \
+	-c $(OUTPUT_DIR)/$(DT)-semi-clairvoyant.csv \
+	--probability_of_HI 0.5 \
+	--target_switching_factor_start 0 \
+	--target_switching_factor_stop 10 \
+	--target_switching_factor_step 10 \
+	--minimum_period 5 \
+	--max_period_list 30 \
+	--n_tasks_list 5 \
+	--utilisation_start 50 \
+	--utilisation_stop 101 \
+	--utilisation_step 5 \
+	--sets_per_config 1000 \
+	--seed 4
+
+generate-set-schedulability-switching-factor: $(VENV)
+	$(VENV_PYTHON) $(GENERATOR_EXP) \
+	-t modular \
+	-o $(OUTPUT_DIR)/$(DT)-schedulability-switching-factor.txt \
+	-c $(OUTPUT_DIR)/$(DT)-schedulability-switching-factor.csv \
+	--probability_of_HI 0.5 \
+	--target_switching_factor_start 0 \
+	--target_switching_factor_stop 110 \
+	--target_switching_factor_step 10 \
+	--minimum_period 5 \
+	--max_period_list 30 \
+	--n_tasks_list 5 \
+	--utilisation_list 80 \
+	--sets_per_config 1000 \
+	--seed 4
 
 generate-set-oracles-rtss: $(VENV)
 	$(VENV_PYTHON) $(GENERATOR_EXP) \

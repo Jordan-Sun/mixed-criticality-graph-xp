@@ -39,6 +39,47 @@ int Scheduler::edfvd(State* state) {
     }
     return j_id;
 }
+
+int Scheduler::edfvdsd(State* state) {
+    std::vector<size_t> actives = state->get_actives();
+
+    if (actives.empty()) {
+        return -1;
+    }
+
+    if (actives.size() == 1) {
+        return actives[0];
+    }
+
+    bool first_set = false;
+    float min_dl;
+    float dl;
+    int j_id;
+
+    if (state->get_crit() == HI) {
+        for (int i : actives) {
+            dl = state->get_job(i)->get_ttd();
+            if (!first_set or dl < min_dl) {
+                min_dl = dl;
+                j_id = i;
+                first_set = true;
+            }
+        }
+    } else if (state->get_crit() == LO) {
+        for (int i : actives) {
+            dl = state->get_job(i)->get_ttsd(state->get_relativity());
+            if (!first_set or (dl < min_dl) or (dl == min_dl and i < j_id)) {
+                min_dl = dl;
+                j_id = i;
+                first_set = true;
+            }
+        }
+    } else {
+        std::cout << "error: wrong crit" << std::endl;
+    }
+    return j_id;
+}
+
 int Scheduler::lwlf(State* state) {
     std::vector<size_t> actives = state->get_actives();
 

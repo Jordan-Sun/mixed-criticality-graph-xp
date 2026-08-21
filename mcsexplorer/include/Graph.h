@@ -28,26 +28,38 @@ class Graph {
           unsafe_oracles(unsafe_oracles_){};
 
     bool is_fail(std::vector<State*> const& states);
+
+    std::vector<State*> request_transition(State* state, CriticalityFilter filter = ALL);
+    std::vector<State*> request_periodic_transition(State* state, CriticalityFilter filter = ALL);
+    std::vector<std::tuple<State*, std::vector<int>>> hi_request_transition(State* state);
+    std::vector<std::tuple<State*, std::vector<int>>> hi_request_periodic_transition(State* state);
+    std::vector<State*> hi_checkpoint_transition(State* state, std::vector<int> const& requestings);
+    std::vector<State*> to_run_checkpoint_transition(State* state, int to_run_index = -1);
     void run_tansition(State* state, int to_run);
     std::vector<State*> completion_transition(State* state, int to_run);
-    std::vector<State*> request_transition(State* state);
-    std::vector<State*> request_periodic_transition(State* state);
+    std::vector<State*> qc_completion_transition(State* state, int to_run);
 
     bool has_unsafe(std::vector<State*> const& states);
     void handle_safe(std::vector<State*>& states);
 
-    std::vector<State*> handle_request_transition(State* state, bool is_last_leaf, bool periodic_only = false);
+    std::vector<State*> handle_request_transition(State* state, bool is_last_leaf, bool periodic_only = false, CriticalityFilter filter = ALL);
+    std::vector<std::tuple<State*, std::vector<int>>> handle_hi_request_transition(State* state, bool is_last_leaf, bool periodic_only = false);
+    std::vector<State*> handle_hi_checkpoint_transition(
+        std::vector<std::tuple<State*, std::vector<int>>> const& request_states, bool is_last_leaf = false);
+    std::vector<State*> handle_lo_request_transition(std::vector<State*> const& states, bool is_last_leaf,
+                                                     bool periodic_only = false);
+    std::tuple<std::vector<State*>, std::vector<int>> handle_to_run_checkpoint_transition(std::vector<State*> const& states, std::vector<int> const& to_runs, bool is_last_leaf = false);
     void handle_run_transition(std::vector<State*> const& states, std::vector<int> to_runs, bool is_last_leaf);
     std::vector<State*> handle_completion_transition(std::vector<State*> const& states, std::vector<int> to_runs,
-                                                     bool is_last_leaf);
+                                                     bool is_last_leaf, bool quarter_clairvoyance = false);
 
-    std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only = false);
+    std::vector<State*> get_neighbors(std::vector<State*> const& leaf_states, bool periodic_only = false, bool quarter_clairvoyance = false);
 
     void initialize_search(SearchAlgorithm algorithm);
     void finalize_search(Result& result);
 
     // Searches using algorithms in order, returning early upon unsafe states and returning the results of all algorithms run until then.
-    std::vector<Result> search(std::vector<SearchAlgorithm> algorithms = {});
+    std::vector<Result> search(std::vector<SearchAlgorithm> algorithms = {}, bool quarter_clairvoyance = false);
 
     void set_safe_oracle(std::function<bool(State*)> safe_oracle) { safe_oracles = {safe_oracle}; }
     void set_unsafe_oracle(std::function<bool(State*)> unsafe_oracle) { unsafe_oracles = {unsafe_oracle}; }
@@ -68,6 +80,8 @@ class Graph {
     void log_unsafe(State* unsafe_state);
     void log_safe(State* safe_state);
     void log_start(State* state, bool is_last_leaf);
+    void log_hi_checkpoint(State* state, bool is_last_leaf);
+    void log_to_run_checkpoint(State* state, bool is_last_leaf);
     void log_run(State* state, bool is_last_leaf);
     void log_completion(State* state, bool is_last_leaf, bool is_last_state);
     void log_request(State* state, bool is_last_leaf);
@@ -103,8 +117,8 @@ class Graph {
     }
 
     // Algorithms
-    void _bfs(Result& result, bool periodic_only = false);
-    void _acbfs(Result& result, bool periodic_only = false);
+    void _bfs(Result& result, bool periodic_only = false, bool quarter_clairvoyance = false);
+    void _acbfs(Result& result, bool periodic_only = false, bool quarter_clairvoyance = false);
     void _dfs(Result& result, bool periodic_only = false);
 };
 
