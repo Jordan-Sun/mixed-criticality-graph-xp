@@ -240,9 +240,9 @@ generate-set-statespace-non-clairvoyant-n-tasks: $(VENV)
 	-t modular \
 	-o $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-n-tasks.txt \
 	-c $(OUTPUT_DIR)/$(DT)-statespace-non-clairvoyant-n-tasks.csv \
-	--target_switching_factor_start 1.0 \
-	--target_switching_factor_stop 1.1 \
-	--target_switching_factor_step 0.1 \
+	--target_switching_factor_start 100 \
+	--target_switching_factor_stop 110 \
+	--target_switching_factor_step 10 \
 	--probability_of_HI 0.5 \
 	--minimum_period 5 \
 	--utilisation_list 50 \
@@ -258,9 +258,9 @@ generate-set-statespace-quarter-clairvoyant-n-tasks: $(VENV)
 	-t modular \
 	-o $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-n-tasks.txt \
 	-c $(OUTPUT_DIR)/$(DT)-statespace-quarter-clairvoyant-n-tasks.csv \
-	--target_switching_factor_start 0.1 \
-	--target_switching_factor_stop 0.2 \
-	--target_switching_factor_step 0.1 \
+	--target_switching_factor_start 10 \
+	--target_switching_factor_stop 20 \
+	--target_switching_factor_step 10 \
 	--probability_of_HI 0.5 \
 	--minimum_period 5 \
 	--utilisation_list 50 \
@@ -276,9 +276,9 @@ generate-set-statespace-semi-clairvoyant-n-tasks: $(VENV)
 	-t modular \
 	-o $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-n-tasks.txt \
 	-c $(OUTPUT_DIR)/$(DT)-statespace-semi-clairvoyant-n-tasks.csv \
-	--target_switching_factor_start 0.0 \
-	--target_switching_factor_stop 0.1 \
-	--target_switching_factor_step 0.1 \
+	--target_switching_factor_start 0 \
+	--target_switching_factor_stop 10 \
+	--target_switching_factor_step 10 \
 	--probability_of_HI 0.5 \
 	--minimum_period 5 \
 	--utilisation_list 50 \

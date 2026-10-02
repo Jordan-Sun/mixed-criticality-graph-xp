@@ -77,10 +77,10 @@ def _campaign_state_space_variant(
         taskset2filename(f, benchmark)
         for f in [
             # "statespace-non-clairvoyant-n-tasks",
-            # "statespace-quarter-clairvoyant-n-tasks",
+            "statespace-quarter-clairvoyant-n-tasks",
             # "statespace-semi-clairvoyant-n-tasks",
             # "statespace-non-clairvoyant-period-max",
-            "statespace-quarter-clairvoyant-period-max",
+            # "statespace-quarter-clairvoyant-period-max",
             # "statespace-semi-clairvoyant-period-max"
         ]
     ]
@@ -91,8 +91,8 @@ def _campaign_state_space_variant(
             "taskset_position": tp,
         }
         for tf in taskset_files
-        for tp in range(nb_systems(tasksystems_path=tf))
-        # for tp in range(10) # for testing
+        # for tp in range(nb_systems(tasksystems_path=tf))
+        for tp in range(10) # for testing
     ]
 
     base_config = {
@@ -779,12 +779,12 @@ def main() -> None:
     min15 = 60*15
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
-    # for campaign in campaign_state_space(timeout_seconds=min30):
-    #     parallel_runner(campaign=campaign, nb_cpus=2)
+    for campaign in campaign_state_space(timeout_seconds=min30):
+        parallel_runner(campaign=campaign, nb_cpus=1)
     # for campaign in campaigns_schedulability(timeout_seconds=min15):
     #     parallel_runner(campaign=campaign, nb_cpus=24)
-    for campaign in campaigns_switching_factor(timeout_seconds=min15):
-        parallel_runner(campaign=campaign, nb_cpus=24)
+    # for campaign in campaigns_switching_factor(timeout_seconds=min15):
+    #     parallel_runner(campaign=campaign, nb_cpus=24)
     # for campaign in campaigns_chained(timeout_seconds=min15):
     #     parallel_runner(campaign=campaign, nb_cpus=24)
     # parallel_runner(campaign=campaign_oracles(timeout_seconds=min15), nb_cpus=128)

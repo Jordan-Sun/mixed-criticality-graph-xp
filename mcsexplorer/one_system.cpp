@@ -10,6 +10,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <sys/resource.h>
 
 typedef enum {
     SUCCESS = 0,
@@ -267,6 +268,10 @@ int main(int argc, char** argv) {
     }
     // Print the total duration and overall is_safe result
     std::cout << ";is_safe=" << (is_safe == 1 ? "True" : "False") << ";duration_ns=" << duration_ns;
+    // Also the max memory usage
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    std::cout << ";max_memory_kb=" << usage.ru_maxrss;
 
     return 0;
 }
