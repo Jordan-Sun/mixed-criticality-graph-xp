@@ -91,8 +91,8 @@ def _campaign_state_space_variant(
             "taskset_position": tp,
         }
         for tf in taskset_files
-        # for tp in range(nb_systems(tasksystems_path=tf))
-        for tp in range(10) # for testing
+        for tp in range(nb_systems(tasksystems_path=tf))
+        # for tp in range(10) # for testing
     ]
 
     base_config = {
@@ -779,7 +779,7 @@ def main() -> None:
     min15 = 60*15
 
     # parallel_runner(campaign=campaign_state_space_bfs(timeout_seconds=min30), nb_cpus=8) # done
-    for campaign in campaign_state_space(timeout_seconds=min30):
+    for campaign in campaign_state_space(timeout_seconds=min15):
         parallel_runner(campaign=campaign, nb_cpus=1)
     # for campaign in campaigns_schedulability(timeout_seconds=min15):
     #     parallel_runner(campaign=campaign, nb_cpus=24)
