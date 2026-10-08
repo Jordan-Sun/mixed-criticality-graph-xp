@@ -70,7 +70,7 @@ class Graph {
     void graphiz_teardown();
     void connect_neighbor_graphviz(State* from_, State* to) const;
     void connect_neighbors_graphviz(State* from, std::vector<State*> to_list) const;
-    void simulate_neighbor_graphviz(State* neighbor, std::vector<int> nats) const;
+    void simulate_neighbor_graphviz(State* neighbor, std::vector<int> const& nats) const;
 
     static void repr(std::vector<State*> states);
     void log_start_search();

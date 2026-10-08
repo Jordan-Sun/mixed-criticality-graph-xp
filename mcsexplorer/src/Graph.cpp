@@ -451,7 +451,7 @@ void Graph::_bfs(Result& result, bool periodic_only, bool quarter_clairvoyance) 
     for (State* unexplored_state : leaf_states) delete unexplored_state;
 }
 
-bool pairwise_smaller_all(std::vector<int> a, std::vector<int> b) {
+bool pairwise_smaller_all(std::vector<int> const& a, std::vector<int> const& b) {
     if (a.size() != b.size()) {
         // if this happens there is a bug in the code about antichain max set
         std::cout << "a" << std::endl;
@@ -755,7 +755,10 @@ void Graph::connect_neighbors_graphviz(State* from, std::vector<State*> to_list)
     }
 }
 
-void Graph::simulate_neighbor_graphviz(State* neighbor, std::vector<int> nats) const {
+void Graph::simulate_neighbor_graphviz(State* neighbor, std::vector<int> const& nats) const {
+    if (!plot_graph) {
+        return;
+    }
     std::stringstream simulator_hash;
     simulator_hash << "n_";
     simulator_hash << neighbor->get_hash_idle();
